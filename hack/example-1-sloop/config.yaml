@@ -1,0 +1,11 @@
+apiVersion: app.sloop.io/v1alpha 
+Kind: Configurator
+metadata:
+  name: sloop-config
+spec:
+  sourceFiles:
+    - app/*.yaml
+  valueFiles:
+    - values.yaml
+
+    
