@@ -1,0 +1,5 @@
+package apply
+
+func applyPackage() {
+
+}

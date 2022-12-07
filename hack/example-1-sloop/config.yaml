@@ -5,7 +5,7 @@ metadata:
 spec:
   template: default
   global:
-    namespace: app2
+    namespace: app
     values:
       - values.yaml
   sources:
@@ -14,10 +14,5 @@ spec:
       namespace: app-ns
       values:
         - values.yaml 
-    - name: app2
-      path: app2/*.yaml
-      namespace: app2-ns
-      values:
-        - values.yaml
 
     
