@@ -1,7 +1,7 @@
 apiVersion: app.sloop.io/v1 
 Kind: Configurator
 metadata:
-  name: sloop-config
+  name: sloop-config-dev
 spec:
   template: default
   version: 1.0.0

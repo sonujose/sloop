@@ -1,0 +1,27 @@
+{
+    "name": "sloop-config-dev",
+    "config": {
+        "components": [
+            {
+                "name": "comp-a",
+                "namespace": "namespace-a",
+                "path": "/app/path",
+                "manifests_list": [
+                    {
+                        "name": "template/deployment.yaml",
+                        "manifest_yaml": ""
+                    }
+                ]
+            }
+        ]
+    },
+    "manifests": [
+        {
+            "component": "comp-a",
+            "manifest_yaml": ""
+        }
+    ],
+    "info": {
+        "deployed_at": "2022-12-06T08:48:27.322638-05:00"
+    }
+}
