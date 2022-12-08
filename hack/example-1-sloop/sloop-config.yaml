@@ -9,25 +9,29 @@ spec:
     namespace: app-ns
     values:
       - app/values.yaml
-  helmSources:
-    - name: prometheus
-      url: https://charts.helm.sh/stable
-      remote: true
-      namespace: monitoring
-      values:
-        - app/values.yaml
-    - name: myapp
-      remote: false
-      path: demo/app/myapp
-      namespace: app
-      values:
-        - app/values.yaml
-  sources:
+  helmFile:
+    repositories:
+      - name: prometheus-community
+      url: https://prometheus-community.github.io/helm-charts
+
+    releases:
+      - name: prom-norbac-ubuntu
+        namespace: prometheus
+        chart: prometheus-community/prometheus
+        set:
+          - name: rbac.create
+            value: false
+  components:
     - name: app
       enabled: true
       path: app/*.yaml
       namespace: app-ns
-      values:
+      set:
+        - name : some-key
+          value: some-value
+        - name : some-key2
+          value: some-value2
+      valuesFiles:
         - app/values.yaml 
 
     

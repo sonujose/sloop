@@ -3,6 +3,8 @@ package template
 import "github.com/sirupsen/logrus"
 
 type Template struct {
+	fileBlob []byte
+	obj      interface{}
 }
 
 func (t *Template) GeneratePackageTemplates(output string, log *logrus.Logger) error {
