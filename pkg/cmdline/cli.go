@@ -18,9 +18,10 @@ func Initialize() *cli.App {
 		},
 		Commands: []*cli.Command{
 			{
-				Name:    "template",
-				Usage:   "locally Render the sloop package configurations",
-				Aliases: []string{"t"},
+				Name:     "template",
+				Usage:    "locally Render the sloop package configurations",
+				Category: "Packaging",
+				Aliases:  []string{"t"},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
 						Name:    "output",
@@ -32,21 +33,24 @@ func Initialize() *cli.App {
 				Action: sloopTemplateAction,
 			},
 			{
-				Name:    "analyse",
-				Usage:   "analyse the sloop config file and generate report",
-				Aliases: []string{"anly"},
-				Action:  sloopTemplateAction,
+				Name:     "analyse",
+				Usage:    "analyse the sloop config file and generate report",
+				Aliases:  []string{"anly"},
+				Action:   sloopTemplateAction,
+				Category: "Packaging",
 			},
 			{
-				Name:    "visualize",
-				Usage:   "open the sloop visualizer dashboard",
-				Aliases: []string{"viz"},
-				Action:  sloopTemplateAction,
+				Name:     "visualize",
+				Usage:    "open the sloop visualizer dashboard",
+				Aliases:  []string{"viz"},
+				Action:   sloopTemplateAction,
+				Category: "Deploy",
 			},
 			{
-				Name:    "controller",
-				Usage:   "manage sloop controller",
-				Aliases: []string{"ctrl"},
+				Name:     "controller",
+				Usage:    "manage sloop controller",
+				Aliases:  []string{"ctrl"},
+				Category: "Controller",
 				Subcommands: []*cli.Command{
 					{
 						Name:  "install",
@@ -75,9 +79,10 @@ func Initialize() *cli.App {
 				},
 			},
 			{
-				Name:    "apply",
-				Usage:   "apply the slooper configurations to the target cluster",
-				Aliases: []string{"a"},
+				Name:     "apply",
+				Usage:    "apply the slooper configurations to the target cluster",
+				Aliases:  []string{"a"},
+				Category: "Deploy",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
 						Name:  "dry-run",
