@@ -1,8 +1,6 @@
 package cmdline
 
 import (
-	"github.com/sonujose/sloop/pkg/core/template"
-	"github.com/sonujose/sloop/pkg/logger"
 	"github.com/urfave/cli/v2"
 )
 
@@ -11,6 +9,13 @@ func Initialize() *cli.App {
 		Name:                 "sloop",
 		Usage:                "A simple Kubernetes Package manager for all lazy folks",
 		EnableBashCompletion: true,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:    "filename",
+				Aliases: []string{"f"},
+				Usage:   "specify the sloop config file",
+			},
+		},
 		Commands: []*cli.Command{
 			{
 				Name:    "template",
@@ -25,6 +30,18 @@ func Initialize() *cli.App {
 					},
 				},
 				Action: sloopTemplateAction,
+			},
+			{
+				Name:    "analyse",
+				Usage:   "analyse the sloop config file and generate report",
+				Aliases: []string{"anly"},
+				Action:  sloopTemplateAction,
+			},
+			{
+				Name:    "visualize",
+				Usage:   "open the sloop visualizer dashboard",
+				Aliases: []string{"viz"},
+				Action:  sloopTemplateAction,
 			},
 			{
 				Name:    "controller",
@@ -58,8 +75,9 @@ func Initialize() *cli.App {
 				},
 			},
 			{
-				Name:  "apply",
-				Usage: "apply the slooper configurations to the target cluster",
+				Name:    "apply",
+				Usage:   "apply the slooper configurations to the target cluster",
+				Aliases: []string{"a"},
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
 						Name:  "dry-run",
@@ -77,17 +95,4 @@ func Initialize() *cli.App {
 	}
 
 	return app
-}
-
-func sloopTemplateAction(ctx *cli.Context) error {
-
-	log := logger.NewLogger()
-
-	err := template.GeneratePackageTemplates(ctx.String("output"), log)
-
-	if err != nil {
-		return cli.Exit(err.Error(), 2)
-	}
-
-	return nil
 }

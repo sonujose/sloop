@@ -1,0 +1,33 @@
+apiVersion: app.sloop.io/v1 
+Kind: Configurator
+metadata:
+  name: sloop-config
+spec:
+  template: default
+  version: 1.0.0
+  global:
+    namespace: app-ns
+    values:
+      - app/values.yaml
+  helmSources:
+    - name: prometheus
+      url: https://charts.helm.sh/stable
+      remote: true
+      namespace: monitoring
+      values:
+        - app/values.yaml
+    - name: myapp
+      remote: false
+      path: demo/app/myapp
+      namespace: app
+      values:
+        - app/values.yaml
+  sources:
+    - name: app
+      enabled: true
+      path: app/*.yaml
+      namespace: app-ns
+      values:
+        - app/values.yaml 
+
+    
