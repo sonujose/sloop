@@ -1,0 +1,23 @@
+replicaCount: 1
+
+name: example-1
+
+image:
+  repository: nginx
+  tag: 1.14.2
+  pullPolicy: IfNotPresent
+
+labels:
+  app.kubernetes.io/version: 1.0
+  app.kubernetes.io/name: example-1
+
+selectors:
+  app.kubernetes.io/version: 1.0
+  app.kubernetes.io/name: example-1
+
+service:
+  type: ClusterIP
+  port: 80
+  protocol: TCP
+
+

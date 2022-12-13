@@ -10,8 +10,8 @@ func sloopTemplateAction(ctx *cli.Context) error {
 
 	log := logger.NewLogger()
 
-	tr := template.Template{}
-	err := tr.GeneratePackageTemplates(ctx.String("output"), log)
+	tr := template.Template{Logger: log}
+	err := tr.GeneratePackageTemplates()
 
 	if err != nil {
 		return cli.Exit(err.Error(), 2)

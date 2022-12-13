@@ -11,7 +11,7 @@ spec:
   ports:
     - port: {{ .service.port }}
       targetPort: http
-      protocol: TCP
+      protocol: {{ .service.protocol }}
       name: http
   selector:
   {{- range $key, $value := .selectors}}

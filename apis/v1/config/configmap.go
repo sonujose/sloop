@@ -1,4 +1,4 @@
-package v1
+package config
 
 type SloopConfigmap struct {
 	Name      string      `json:"name"`
@@ -6,15 +6,15 @@ type SloopConfigmap struct {
 	Manifests []Manifests `json:"manifests"`
 	Info      Info        `json:"info"`
 }
-type ManifestsList struct {
+type Templates struct {
 	Name         string `json:"name"`
 	ManifestYaml string `json:"manifest_yaml"`
 }
 type Components struct {
-	Name          string          `json:"name"`
-	Namespace     string          `json:"namespace"`
-	Path          string          `json:"path"`
-	ManifestsList []ManifestsList `json:"manifests_list"`
+	Name      string      `json:"name"`
+	Namespace string      `json:"namespace"`
+	Path      string      `json:"path"`
+	Templates []Templates `json:"manifests_list"`
 }
 type Config struct {
 	Components []Components `json:"components"`

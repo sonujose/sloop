@@ -1,0 +1,34 @@
+apiVersion: app.sloop.io/v1 
+Kind: Configurator
+metadata:
+  name: sloop-config-dev
+spec:
+  template: default
+  version: 1.0.0
+  global:
+    namespace: app-ns
+  components:
+    - name: app
+      enabled: false
+      path: ./hack/example-1-sloop/app
+      namespace: app-ns
+      set:
+        - name : .image.tag
+          value: 1.14.34
+      valuesFiles:
+        - ./hack/example-1-sloop/values.yaml 
+    - name: microservice
+      enabled: true
+      path: ./hack/example-1-sloop/app2
+      namespace: app-ns
+      set:
+        - name: .image.tag
+          value: 1.14.34
+        - name: .name
+          value: updated-example
+        - name: .service.port
+          value: 443 
+        - name: .service.protocol
+          value: new-protocol
+      valuesFiles:
+        - ./hack/example-1-sloop/values.yaml 
