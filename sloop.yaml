@@ -1,5 +1,5 @@
 apiVersion: app.sloop.io/v1 
-Kind: Configurator
+Kind: SloopConfig
 metadata:
   name: sloop-config-dev
 spec:

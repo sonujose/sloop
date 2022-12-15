@@ -1,6 +1,6 @@
-package configurator
+package config
 
-type SloopConfigurator struct {
+type SloopConfig struct {
 	APIVersion string   `yaml:"apiVersion"`
 	Kind       string   `yaml:"Kind"`
 	Metadata   Metadata `yaml:"metadata"`
