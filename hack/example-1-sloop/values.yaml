@@ -20,4 +20,8 @@ service:
   port: 80
   protocol: TCP
 
+volumes:
+  namesper:
+    daily: true
+
 

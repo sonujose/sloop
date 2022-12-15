@@ -25,7 +25,7 @@ spec:
         - name: .image.tag
           value: 1.14.34
         - name: .name
-          value: updated-example
+          value: updated-example-f3
         - name: .service.port
           value: 443 
         - name: .service.protocol
