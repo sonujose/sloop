@@ -11,7 +11,7 @@ import (
 var rootCmd = &cobra.Command{
 	Use:   "sloop",
 	Short: "Sloop is a package manager for lazy kubernetes folks",
-	Long:  `A Fast and extensible kubernetes package manager for application deployment and management.`,
+	Long:  `Sloop is a kubernetes package manager designed for all lazy devops folks. It helps in deploying, packaging and managing kubernetes artifacts.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		return
 	},
