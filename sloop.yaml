@@ -24,11 +24,9 @@ spec:
       set:
         - name: .image.tag
           value: 1.14.34
+        - name: .image.repo
+          value: nginx
         - name: .name
           value: updated-example-f3
-        - name: .service.port
-          value: 443 
-        - name: .service.protocol
-          value: new-protocol
       valuesFiles:
         - ./hack/example-1-sloop/values.yaml 

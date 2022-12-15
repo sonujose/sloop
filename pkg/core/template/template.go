@@ -6,6 +6,9 @@ import (
 	"io/ioutil"
 	"strings"
 
+	"io"
+	"text/template"
+
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/config"
 	yaml "gopkg.in/yaml.v2"
@@ -80,16 +83,16 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) error {
 
 			// DEBUG
 			//log.Debugf("Default values yaml - %v", valuesFileYaml)
-			valuesFile, _ := yaml.Marshal(valuesFileYaml)
-			log.Infof("\n%s", string(valuesFile))
+			//valuesFile, _ := yaml.Marshal(valuesFileYaml)
+			//log.Infof("Default values yaml\n%s", string(valuesFile))
 
 			//log.Debugf("Override yaml - %v", overridesYaml)
-			overrideYamlFile, _ := yaml.Marshal(overridesYaml)
-			log.Infof("\n%s", string(overrideYamlFile))
+			//overrideYamlFile, _ := yaml.Marshal(overridesYaml)
+			//log.Infof("Override Yaml\n%s", string(overrideYamlFile))
 
 			//log.Debugf("New updated yaml - %v", updatedMergedYaml)
-			mergedYamlFile, _ := yaml.Marshal(updatedMergedYaml)
-			log.Infof("\n%s", string(mergedYamlFile))
+			//mergedYamlFile, _ := yaml.Marshal(updatedMergedYaml)
+			//log.Infof("Merged Yaml\n%s", string(mergedYamlFile))
 
 			componentManifest.Write([]byte("---\n"))
 			componentManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s\n", j.Name, templateFile)))
@@ -103,9 +106,17 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) error {
 
 		}
 
-		log.Infof("\n%s", componentManifest.String())
+		log.Infof("Manifest Template\n%s", componentManifest.String())
 
 	}
 
 	return nil
+}
+
+func tpl(t string, vals map[string]interface{}, out io.Writer) error {
+	tt, err := template.New("_").Parse(t)
+	if err != nil {
+		return err
+	}
+	return tt.Execute(out, vals)
 }
