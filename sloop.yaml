@@ -1,5 +1,5 @@
 apiVersion: app.sloop.io/v1 
-Kind: Configurator
+Kind: SloopConfig
 metadata:
   name: sloop-config-dev
 spec:
@@ -24,11 +24,9 @@ spec:
       set:
         - name: .image.tag
           value: 1.14.34
+        - name: .image.repo
+          value: nginx
         - name: .name
-          value: updated-example
-        - name: .service.port
-          value: 443 
-        - name: .service.protocol
-          value: new-protocol
+          value: updated-example-f3
       valuesFiles:
         - ./hack/example-1-sloop/values.yaml 

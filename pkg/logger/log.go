@@ -23,7 +23,7 @@ func NewLogger() *logrus.Logger {
 	log.SetFormatter(&logrus.TextFormatter{TimestampFormat: LogTimestampFormat,
 		FullTimestamp: true, ForceColors: true, DisableLevelTruncation: true})
 
-	log.SetLevel(getLowestLoggingLevel())
+	//log.SetLevel(getLowestLoggingLevel())
 	log.SetOutput(logrus.StandardLogger().Out)
 
 	return log

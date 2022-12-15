@@ -1,6 +1,6 @@
-package config
+package controller
 
-type SloopConfigmap struct {
+type SloopControllerConfig struct {
 	Name      string      `json:"name"`
 	Config    Config      `json:"config"`
 	Manifests []Manifests `json:"manifests"`

@@ -4,49 +4,27 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"path/filepath"
 	"strings"
 
+	"io"
+	"text/template"
+
 	"github.com/sirupsen/logrus"
-	"github.com/sonujose/sloop/apis/v1/configurator"
-	"github.com/sonujose/sloop/pkg/logger"
+	"github.com/sonujose/sloop/apis/v1/config"
 	yaml "gopkg.in/yaml.v2"
 )
 
-type Template struct {
-	Logger *logrus.Logger
+type SloopTemplate struct {
+	SloopCfg *config.SloopConfig
 }
 
-const (
-	defaultSloopConfigFileName string = "./sloop.yaml"
-)
-
-func (t *Template) ParseSloopConfig() *configurator.SloopConfigurator {
-	// Read the sloop condif yaml file and parse the details
-	filename, _ := filepath.Abs(defaultSloopConfigFileName)
-	yamlFile, err := ioutil.ReadFile(filename)
-
-	if err != nil {
-		t.Logger.WithError(err).Errorf("Error unmarshall system")
-		t.Logger.Exit(logger.SloopConfiguratorFileLoadError)
-	}
-
-	var config configurator.SloopConfigurator
-
-	err = yaml.Unmarshal(yamlFile, &config)
-	if err != nil {
-		t.Logger.WithError(err).Errorf("Error parsing the sloop config")
-		t.Logger.Exit(logger.SloopConfiguratorFileParseError)
-	}
-
-	fmt.Printf("Value: %#v\n", config.Kind)
-
-	return &config
+func New(cfg *config.SloopConfig) *SloopTemplate {
+	return &SloopTemplate{SloopCfg: cfg}
 }
 
-func (t *Template) GeneratePackageTemplates() error {
+func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) error {
 
-	configuratorObj := t.ParseSloopConfig()
+	configuratorObj := t.SloopCfg
 
 	for _, j := range configuratorObj.Spec.Components {
 
@@ -59,17 +37,17 @@ func (t *Template) GeneratePackageTemplates() error {
 		templateFiles, err := walkMatch(templatePath, "*")
 
 		if err != nil {
-			t.Logger.WithError(err).Errorf("Error getting path....")
-			t.Logger.Exit(1)
+			log.WithError(err).Errorf("Error getting path....")
+			log.Exit(1)
 		}
 
-		t.Logger.Info(templateFiles)
+		log.Debug(templateFiles)
 
 		valuesFile, err := ioutil.ReadFile(j.ValuesFiles[0])
 
 		if err != nil {
-			t.Logger.WithError(err).Errorf("Error loading values file fr component")
-			t.Logger.Exit(1)
+			log.WithError(err).Errorf("Error loading values file from sloop components")
+			return err
 		}
 
 		var componentManifest bytes.Buffer
@@ -77,60 +55,68 @@ func (t *Template) GeneratePackageTemplates() error {
 		for _, templateFile := range templateFiles {
 			data, err := ioutil.ReadFile(templateFile)
 			if err != nil {
-				t.Logger.WithError(err).Errorf("Error loading file")
-				t.Logger.Exit(1)
+				log.WithError(err).Errorf("Error loading template file")
+				return err
 			}
 
 			blobString := string(data)
 
-			var d2 map[string]interface{}
-			err = yaml.Unmarshal(valuesFile, &d2)
+			var valuesFileYaml map[string]interface{}
+			err = yaml.Unmarshal(valuesFile, &valuesFileYaml)
+			if err != nil {
+				log.WithError(err).Errorf("Error unmarshall values file")
+				return err
+			}
 
 			overrideValues := j.Set
 
-			var overridesYamls map[string]interface{}
+			var overridesYaml map[string]interface{}
 
 			for _, n := range overrideValues {
 				mapKey := n.Name
-
-				//var dbs map[string]interface{}
-
 				setKeys := strings.Split(mapKey, ".")
-
 				newmap := generateValuesForOverrides(setKeys, n.Value)
-				//t.Logger.Info(newmap)
-
-				overridesYamls = mergeMaps(overridesYamls, newmap)
-
+				overridesYaml = mergeMaps(overridesYaml, newmap)
 			}
 
-			t.Logger.Infof("Override yamls - %v", overridesYamls)
-			t.Logger.Infof("Old base yaml - %v", d2)
+			updatedMergedYaml := mergeMaps(valuesFileYaml, overridesYaml)
 
-			newUpdatedYaml := mergeMaps(d2, overridesYamls)
+			// DEBUG
+			//log.Debugf("Default values yaml - %v", valuesFileYaml)
+			//valuesFile, _ := yaml.Marshal(valuesFileYaml)
+			//log.Infof("Default values yaml\n%s", string(valuesFile))
 
-			t.Logger.Infof("New updated yaml - %v", newUpdatedYaml)
+			//log.Debugf("Override yaml - %v", overridesYaml)
+			//overrideYamlFile, _ := yaml.Marshal(overridesYaml)
+			//log.Infof("Override Yaml\n%s", string(overrideYamlFile))
 
-			if err != nil {
-				t.Logger.WithError(err).Errorf("Error unmarshall values file")
-				t.Logger.Exit(1)
-			}
+			//log.Debugf("New updated yaml - %v", updatedMergedYaml)
+			//mergedYamlFile, _ := yaml.Marshal(updatedMergedYaml)
+			//log.Infof("Merged Yaml\n%s", string(mergedYamlFile))
 
 			componentManifest.Write([]byte("---\n"))
 			componentManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s\n", j.Name, templateFile)))
-			//t.Logger.Info(d2)
-			err = tpl(blobString, newUpdatedYaml, &componentManifest)
+
+			err = tpl(blobString, updatedMergedYaml, &componentManifest)
 
 			if err != nil {
-				t.Logger.WithError(err).Errorf("Failed to generate templates for the manifests")
-				t.Logger.Exit(1)
+				log.WithError(err).Errorf("Failed to generate templates for the manifests")
+				return err
 			}
 
 		}
 
-		fmt.Print(componentManifest.String())
+		log.Infof("Manifest Template\n%s", componentManifest.String())
 
 	}
 
 	return nil
+}
+
+func tpl(t string, vals map[string]interface{}, out io.Writer) error {
+	tt, err := template.New("_").Parse(t)
+	if err != nil {
+		return err
+	}
+	return tt.Execute(out, vals)
 }
