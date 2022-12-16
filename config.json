@@ -6,22 +6,17 @@
                 "name": "comp-a",
                 "namespace": "namespace-a",
                 "path": "/app/path",
-                "manifests_list": [
+                "templateFiles": [
                     {
-                        "name": "template/deployment.yaml",
+                        "fileName": "template/deployment.yaml",
                         "manifest_yaml": ""
                     }
                 ]
             }
-        ]
+        ],
+        "consolidated_manifest": ""
     },
-    "manifests": [
-        {
-            "component": "comp-a",
-            "manifest_yaml": ""
-        }
-    ],
-    "info": {
-        "deployed_at": "2022-12-06T08:48:27.322638-05:00"
+    "status": {
+        "deployed_on": "2022-12-06T08:48:27.322638-05:00"
     }
 }

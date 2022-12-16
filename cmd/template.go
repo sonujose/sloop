@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/sirupsen/logrus"
+	"github.com/sonujose/sloop/apis/v1/controller"
 	"github.com/sonujose/sloop/pkg/config"
 	"github.com/sonujose/sloop/pkg/core/template"
 	"github.com/sonujose/sloop/pkg/logger"
@@ -23,9 +24,13 @@ var templateCmd = &cobra.Command{
 		}
 		tr := template.New(sloopConfig)
 
-		if err := tr.GeneratePackageTemplates(l); err != nil {
+		var sloopCtrlConfig *controller.SloopControllerConfig
+
+		if sloopCtrlConfig, err = tr.GeneratePackageTemplates(l); err != nil {
 			return err
 		}
+
+		l.Infof("\n%s", sloopCtrlConfig.Config.ConsolidatedManifest)
 
 		return nil
 	},

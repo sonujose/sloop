@@ -1,28 +1,24 @@
 package controller
 
 type SloopControllerConfig struct {
-	Name      string      `json:"name"`
-	Config    Config      `json:"config"`
-	Manifests []Manifests `json:"manifests"`
-	Info      Info        `json:"info"`
+	Name   string `json:"name"`
+	Config Config `json:"config"`
+	Status Status `json:"status"`
 }
-type Templates struct {
-	Name         string `json:"name"`
+type TemplateFile struct {
+	FileName     string `json:"fileName"`
 	ManifestYaml string `json:"manifest_yaml"`
 }
-type Components struct {
-	Name      string      `json:"name"`
-	Namespace string      `json:"namespace"`
-	Path      string      `json:"path"`
-	Templates []Templates `json:"manifests_list"`
+type Component struct {
+	Name          string         `json:"name"`
+	Namespace     string         `json:"namespace"`
+	Path          string         `json:"path"`
+	TemplateFiles []TemplateFile `json:"templateFiles"`
 }
 type Config struct {
-	Components []Components `json:"components"`
+	Components           []Component `json:"components"`
+	ConsolidatedManifest string      `json:"consolidated_manifest"`
 }
-type Manifests struct {
-	Component    string `json:"component"`
-	ManifestYaml string `json:"manifest_yaml"`
-}
-type Info struct {
-	DeployedAt string `json:"deployed_at"`
+type Status struct {
+	DeployedOn string `json:"deployed_on"`
 }

@@ -11,6 +11,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/config"
+	"github.com/sonujose/sloop/apis/v1/controller"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -22,9 +23,15 @@ func New(cfg *config.SloopConfig) *SloopTemplate {
 	return &SloopTemplate{SloopCfg: cfg}
 }
 
-func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) error {
+func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controller.SloopControllerConfig, error) {
 
 	configuratorObj := t.SloopCfg
+
+	var componentManifest bytes.Buffer
+
+	sloopSyncConfiguration := &controller.SloopControllerConfig{
+		Name: t.SloopCfg.Metadata.Name,
+	}
 
 	for _, j := range configuratorObj.Spec.Components {
 
@@ -37,8 +44,8 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) error {
 		templateFiles, err := walkMatch(templatePath, "*")
 
 		if err != nil {
-			log.WithError(err).Errorf("Error getting path....")
-			log.Exit(1)
+			log.WithError(err).Errorf("Error getting template files from the specified path %s....", templatePath)
+			return nil, err
 		}
 
 		log.Debug(templateFiles)
@@ -47,16 +54,20 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) error {
 
 		if err != nil {
 			log.WithError(err).Errorf("Error loading values file from sloop components")
-			return err
+			return nil, err
 		}
 
-		var componentManifest bytes.Buffer
+		componentConfig := &controller.Component{
+			Name:      j.Name,
+			Namespace: j.Namespace,
+			Path:      j.Path,
+		}
 
 		for _, templateFile := range templateFiles {
 			data, err := ioutil.ReadFile(templateFile)
 			if err != nil {
-				log.WithError(err).Errorf("Error loading template file")
-				return err
+				log.WithError(err).Errorf("Error loading template file - %s", templateFile)
+				return nil, err
 			}
 
 			blobString := string(data)
@@ -64,8 +75,8 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) error {
 			var valuesFileYaml map[string]interface{}
 			err = yaml.Unmarshal(valuesFile, &valuesFileYaml)
 			if err != nil {
-				log.WithError(err).Errorf("Error unmarshall values file")
-				return err
+				log.WithError(err).Errorf("Error unmarshall default values file")
+				return nil, err
 			}
 
 			overrideValues := j.Set
@@ -97,23 +108,29 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) error {
 			componentManifest.Write([]byte("---\n"))
 			componentManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s\n", j.Name, templateFile)))
 
-			err = tpl(blobString, updatedMergedYaml, &componentManifest)
+			err = templateExecutor(blobString, updatedMergedYaml, &componentManifest)
 
 			if err != nil {
 				log.WithError(err).Errorf("Failed to generate templates for the manifests")
-				return err
+				return nil, err
 			}
 
+			templateMeta := &controller.TemplateFile{
+				FileName: templateFile,
+			}
+
+			componentConfig.TemplateFiles = append(componentConfig.TemplateFiles, *templateMeta)
 		}
 
-		log.Infof("Manifest Template\n%s", componentManifest.String())
-
+		sloopSyncConfiguration.Config.Components = append(sloopSyncConfiguration.Config.Components, *componentConfig)
 	}
 
-	return nil
+	sloopSyncConfiguration.Config.ConsolidatedManifest = componentManifest.String()
+
+	return sloopSyncConfiguration, nil
 }
 
-func tpl(t string, vals map[string]interface{}, out io.Writer) error {
+func templateExecutor(t string, vals map[string]interface{}, out io.Writer) error {
 	tt, err := template.New("_").Parse(t)
 	if err != nil {
 		return err

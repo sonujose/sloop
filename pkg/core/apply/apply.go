@@ -1,5 +1,0 @@
-package apply
-
-func applyPackage() {
-
-}
