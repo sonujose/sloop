@@ -26,7 +26,6 @@ func New(cfg *config.SloopConfig) *SloopTemplate {
 func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controller.SloopControllerConfig, error) {
 
 	configuratorObj := t.SloopCfg
-
 	var componentManifest bytes.Buffer
 
 	sloopSyncConfiguration := &controller.SloopControllerConfig{
@@ -64,6 +63,9 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 		}
 
 		for _, templateFile := range templateFiles {
+
+			var templateManifest bytes.Buffer
+
 			data, err := ioutil.ReadFile(templateFile)
 			if err != nil {
 				log.WithError(err).Errorf("Error loading template file - %s", templateFile)
@@ -105,10 +107,10 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 			//mergedYamlFile, _ := yaml.Marshal(updatedMergedYaml)
 			//log.Infof("Merged Yaml\n%s", string(mergedYamlFile))
 
-			componentManifest.Write([]byte("---\n"))
-			componentManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s\n", j.Name, templateFile)))
+			templateManifest.Write([]byte("---\n"))
+			templateManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s\n", j.Name, templateFile)))
 
-			err = templateExecutor(blobString, updatedMergedYaml, &componentManifest)
+			err = templateExecutor(blobString, updatedMergedYaml, &templateManifest)
 
 			if err != nil {
 				log.WithError(err).Errorf("Failed to generate templates for the manifests")
@@ -116,10 +118,12 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 			}
 
 			templateMeta := &controller.TemplateFile{
-				FileName: templateFile,
+				FileName:     templateFile,
+				ManifestYaml: templateManifest.String(),
 			}
 
 			componentConfig.TemplateFiles = append(componentConfig.TemplateFiles, *templateMeta)
+			componentManifest.Write([]byte(templateManifest.String()))
 		}
 
 		sloopSyncConfiguration.Config.Components = append(sloopSyncConfiguration.Config.Components, *componentConfig)

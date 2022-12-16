@@ -9,7 +9,7 @@ spec:
     namespace: app-ns
   components:
     - name: app
-      enabled: false
+      enabled: true
       path: ./hack/example-1-sloop/app
       namespace: app-ns
       set:
@@ -24,7 +24,7 @@ spec:
       set:
         - name: .image.tag
           value: 1.14.34
-        - name: .image.repo
+        - name: .image.repository
           value: nginx
         - name: .name
           value: updated-example-f3

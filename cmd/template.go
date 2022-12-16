@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"encoding/json"
+
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/controller"
 	"github.com/sonujose/sloop/pkg/config"
@@ -31,6 +33,13 @@ var templateCmd = &cobra.Command{
 		}
 
 		l.Infof("\n%s", sloopCtrlConfig.Config.ConsolidatedManifest)
+
+		sloopcontrollerContent, err := json.Marshal(sloopCtrlConfig)
+		if err != nil {
+			return err
+		}
+
+		l.Debugf("\nSloop Controller config - %v", string(sloopcontrollerContent))
 
 		return nil
 	},
