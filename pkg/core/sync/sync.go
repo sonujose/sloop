@@ -58,11 +58,12 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 	secretName := getSloopConfigSecretName(s.SloopCfg.Spec.Version, s.SloopCfg.Metadata.Name, newSyncRevision)
 
 	sloopConfigSecretLabels := map[string]string{
-		"updated":  fmt.Sprint(deployedOn.Unix()),
-		"package":  s.SloopCfg.Metadata.Name,
-		"owner":    "sloop",
-		"revision": fmt.Sprint(newSyncRevision),
-		"version":  s.SloopCfg.Spec.Version,
+		"updated":    fmt.Sprint(deployedOn.Unix()),
+		"package":    s.SloopCfg.Metadata.Name,
+		"owner":      "sloop",
+		"revision":   fmt.Sprint(newSyncRevision),
+		"version":    s.SloopCfg.Spec.Version,
+		"components": fmt.Sprint(len(s.SloopCfg.Spec.Components)),
 	}
 
 	SloopControllerSecret := &corev1.Secret{

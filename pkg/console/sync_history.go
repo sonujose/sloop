@@ -15,6 +15,6 @@ func PrintSyncHistory(hs []history.SyncHistoryObj) {
 	for _, j := range hs {
 		t.AppendRow([]interface{}{j.Revision, j.Updated, j.Package, j.Version})
 	}
-	t.SetStyle(table.StyleBold)
+	t.SetStyle(table.StyleLight)
 	t.Render()
 }

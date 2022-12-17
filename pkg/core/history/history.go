@@ -23,10 +23,11 @@ func New(kclient *kubernetes.Clientset) *SloopHistory {
 }
 
 type SyncHistoryObj struct {
-	Revision string
-	Package  string
-	Updated  time.Time
-	Version  string
+	Revision   string
+	Package    string
+	Updated    time.Time
+	Version    string
+	Components string
 }
 
 func (h *SloopHistory) ListSyncHistory(name string, namespace string) ([]SyncHistoryObj, error) {
@@ -43,10 +44,11 @@ func (h *SloopHistory) ListSyncHistory(name string, namespace string) ([]SyncHis
 		updatedOn := time.Unix(syncSecret.CreationTimestamp.Unix(), 0)
 
 		sh := SyncHistoryObj{
-			Revision: syncSecret.Labels["revision"],
-			Updated:  updatedOn,
-			Package:  syncSecret.Labels["package"],
-			Version:  syncSecret.Labels["version"],
+			Revision:   syncSecret.Labels["revision"],
+			Updated:    updatedOn,
+			Package:    syncSecret.Labels["package"],
+			Version:    syncSecret.Labels["version"],
+			Components: syncSecret.Labels["components"],
 		}
 		syncHistory = append(syncHistory, sh)
 	}
