@@ -108,7 +108,7 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 			//log.Infof("Merged Yaml\n%s", string(mergedYamlFile))
 
 			templateManifest.Write([]byte("---\n"))
-			templateManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s\n", j.Name, templateFile)))
+			templateManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s, Namespace: %s\n", j.Name, templateFile, j.Namespace)))
 
 			err = templateExecutor(blobString, updatedMergedYaml, &templateManifest)
 

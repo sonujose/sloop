@@ -1,8 +1,14 @@
 package cmd
 
 import (
+	"encoding/json"
+
 	"github.com/sirupsen/logrus"
+	"github.com/sonujose/sloop/apis/v1/controller"
 	"github.com/sonujose/sloop/pkg/config"
+	sloopSync "github.com/sonujose/sloop/pkg/core/sync"
+	"github.com/sonujose/sloop/pkg/core/template"
+	"github.com/sonujose/sloop/pkg/kube"
 	"github.com/sonujose/sloop/pkg/logger"
 	"github.com/spf13/cobra"
 )
@@ -25,9 +31,35 @@ var syncCmd = &cobra.Command{
 		if err != nil {
 			return err
 		}
+		tr := template.New(sloopConfig)
 
-		// TODO : Implement logic to analyze and generate report for sloop
-		l.Info(sloopConfig)
+		var sloopCtrlConfig *controller.SloopControllerConfig
+
+		if sloopCtrlConfig, err = tr.GeneratePackageTemplates(l); err != nil {
+			return err
+		}
+
+		sloopCtrlInput, err := json.Marshal(sloopCtrlConfig)
+		if err != nil {
+			return err
+		}
+
+		l.Debugf("\nSloop Controller config - %v", string(sloopCtrlInput))
+
+		kclient, err := kube.NewClient()
+
+		if err != nil {
+			l.Errorf("Error connecting to cluster via clientcmd. Aborting...")
+			return err
+		}
+
+		ss := sloopSync.New(sloopConfig, sloopCtrlConfig, kclient)
+
+		err = ss.SyncPackage(l)
+
+		if err != nil {
+			return err
+		}
 
 		return nil
 	},

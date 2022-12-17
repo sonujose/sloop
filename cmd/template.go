@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/controller"
@@ -32,7 +33,8 @@ var templateCmd = &cobra.Command{
 			return err
 		}
 
-		l.Infof("\n%s", sloopCtrlConfig.Config.ConsolidatedManifest)
+		// CONSOLE_INFO : showing the templated manifest
+		fmt.Println(sloopCtrlConfig.Config.ConsolidatedManifest)
 
 		sloopcontrollerContent, err := json.Marshal(sloopCtrlConfig)
 		if err != nil {

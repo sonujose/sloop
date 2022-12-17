@@ -20,5 +20,9 @@ type Config struct {
 	ConsolidatedManifest string      `json:"consolidated_manifest"`
 }
 type Status struct {
-	DeployedOn string `json:"deployed_on"`
+	DeployedOn   string `json:"deployed_on" yaml:"deployed-on"`
+	SyncRevision int    `json:"sync_revision" yaml:"sync-revision"`
+	Version      string `json:"version" yaml:"version"`
+	Components   int    `json:"components" yaml:"components"`
+	Name         string `json:"name" yaml:"name"`
 }
