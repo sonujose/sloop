@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	dryrun    bool
-	namespace string
+	dryrun      bool
+	namespace   string
+	allpackages bool
 )
 
 var syncCmd = &cobra.Command{
@@ -91,7 +92,8 @@ var syncHistoryCmd = &cobra.Command{
 		}
 
 		hs := history.New(kclient)
-		syncHistory, err := hs.ListSyncHistory(sloopConfig.Metadata.Name, sloopConfig.Metadata.Namespace)
+
+		syncHistory, err := hs.ListSyncHistory(sloopConfig.Metadata.Name, sloopConfig.Metadata.Namespace, allpackages)
 		if err != nil {
 			return err
 		}
@@ -110,7 +112,7 @@ var syncHistoryCmd = &cobra.Command{
 func init() {
 	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dryrun", "d", false, "Use dry run to test the sloop configurations.")
 	syncCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "specify the global namespace for syncing sloop config")
-
+	syncHistoryCmd.PersistentFlags().BoolVarP(&allpackages, "allpackages", "a", false, "get history from all the packages")
 	syncCmd.AddCommand(syncHistoryCmd)
 	rootCmd.AddCommand(syncCmd)
 }

@@ -30,10 +30,10 @@ type SyncHistoryObj struct {
 	Components string
 }
 
-func (h *SloopHistory) ListSyncHistory(name string, namespace string) ([]SyncHistoryObj, error) {
+func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackages bool) ([]SyncHistoryObj, error) {
 
 	var syncHistory []SyncHistoryObj
-	syncSecretList, err := h.GetPackageSyncHistory(name, namespace)
+	syncSecretList, err := h.GetPackageSyncHistory(name, namespace, allpackages)
 
 	if err != nil {
 		return nil, err
@@ -56,11 +56,17 @@ func (h *SloopHistory) ListSyncHistory(name string, namespace string) ([]SyncHis
 	return syncHistory, nil
 }
 
-func (h *SloopHistory) GetPackageSyncHistory(name string, namespace string) ([]v1.Secret, error) {
+func (h *SloopHistory) GetPackageSyncHistory(name string, namespace string, allpackages bool) ([]v1.Secret, error) {
 
 	ctx := context.Background()
 
-	lsel := kblabels.Set{"owner": "sloop", "package": name}.AsSelector()
+	var lsel kblabels.Selector
+	if allpackages {
+		lsel = kblabels.Set{"owner": "sloop"}.AsSelector()
+	} else {
+		lsel = kblabels.Set{"owner": "sloop", "package": name}.AsSelector()
+	}
+
 	opts := metav1.ListOptions{LabelSelector: lsel.String()}
 
 	secretList, err := h.KubeClient.CoreV1().Secrets(namespace).List(ctx, opts)

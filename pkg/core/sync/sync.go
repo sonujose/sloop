@@ -97,7 +97,7 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 func getLastSyncRevision(KubeClient *kubernetes.Clientset, name string, namespace string) (int, error) {
 
 	hs := history.New(KubeClient)
-	syncHistory, err := hs.GetPackageSyncHistory(name, namespace)
+	syncHistory, err := hs.GetPackageSyncHistory(name, namespace, false)
 
 	var lastrev int = 0
 
