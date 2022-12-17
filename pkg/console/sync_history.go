@@ -10,10 +10,10 @@ import (
 func PrintSyncHistory(hs []history.SyncHistoryObj) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"REVISION", "UPDATED", "SLOOP PACKAGE", "VERSION"})
+	t.AppendHeader(table.Row{"REVISION", "UPDATED", "SLOOP PACKAGE", "VERSION", "COMPONENTS"})
 
 	for _, j := range hs {
-		t.AppendRow([]interface{}{j.Revision, j.Updated, j.Package, j.Version})
+		t.AppendRow([]interface{}{j.Revision, j.Updated, j.Package, j.Version, j.Components})
 	}
 	t.SetStyle(table.StyleLight)
 	t.Render()

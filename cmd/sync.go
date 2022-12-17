@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/controller"
@@ -95,7 +96,11 @@ var syncHistoryCmd = &cobra.Command{
 			return err
 		}
 
-		console.PrintSyncHistory(syncHistory)
+		if len(syncHistory) > 0 {
+			console.PrintSyncHistory(syncHistory)
+		} else {
+			fmt.Println("No sync history found for the package -", sloopConfig.Metadata.Name)
+		}
 
 		return nil
 	},
