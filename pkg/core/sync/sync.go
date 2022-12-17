@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -59,17 +58,18 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 	secretName := getSloopConfigSecretName(s.SloopCfg.Spec.Version, s.SloopCfg.Metadata.Name, newSyncRevision)
 
 	sloopConfigSecretLabels := map[string]string{
-		"modifiedAt": fmt.Sprint(deployedOn.Unix()),
-		"name":       s.SloopCfg.Metadata.Name,
-		"owner":      "sloop",
-		"revision":   fmt.Sprint(newSyncRevision),
+		"updated":  fmt.Sprint(deployedOn.Unix()),
+		"package":  s.SloopCfg.Metadata.Name,
+		"owner":    "sloop",
+		"revision": fmt.Sprint(newSyncRevision),
+		"version":  s.SloopCfg.Spec.Version,
 	}
 
 	SloopControllerSecret := &corev1.Secret{
 		Data: kcSecretBlob,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
-			Namespace: "sloop",
+			Namespace: s.SloopCfg.Metadata.Namespace,
 			Labels:    sloopConfigSecretLabels,
 		},
 		TypeMeta: metav1.TypeMeta{},
@@ -77,7 +77,7 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 	}
 
 	ctx := context.Background()
-	_, err = s.KubeClient.CoreV1().Secrets("sloop").Create(ctx, SloopControllerSecret, metav1.CreateOptions{})
+	_, err = s.KubeClient.CoreV1().Secrets(s.SloopCfg.Metadata.Namespace).Create(ctx, SloopControllerSecret, metav1.CreateOptions{})
 
 	if err != nil {
 		l.Errorf("Error creating sloop config secret.")
@@ -87,30 +87,30 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 	sloopDeploymentStatus, _ := yaml.Marshal(s.ControllerCfg.Status)
 
 	// CONSOLE-INFO : SYNC OPERATION STATUS
-	fmt.Println("synced sloop configuration")
+	fmt.Println("All done! Synced sloop configuration for controller")
 	fmt.Println(string(sloopDeploymentStatus))
 
 	return nil
 }
 
 func getLastSyncRevision(KubeClient *kubernetes.Clientset, name string, namespace string) (int, error) {
+
 	hs := history.New(KubeClient)
 	syncHistory, err := hs.GetPackageSyncHistory(name, namespace)
 
 	var lastrev int = 0
 
 	if err != nil {
-		log.Println("Unable to list package history", err)
-		return lastrev, fmt.Errorf("No previous sync revisions found")
+		return lastrev, fmt.Errorf("Unable to fetch sync history from the cluster. error=%v", err)
 	}
 
 	var lastSyncExecutionMeta v1.Secret
 
-	if len(syncHistory) >= 0 {
-		lastSyncExecutionMeta = syncHistory[0]
-	} else {
+	if len(syncHistory) == 0 {
 		return lastrev, fmt.Errorf("No previous sync revisions found")
 	}
+
+	lastSyncExecutionMeta = syncHistory[0]
 
 	lastrev, err = strconv.Atoi(lastSyncExecutionMeta.Labels["revision"])
 	if err != nil {

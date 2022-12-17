@@ -6,6 +6,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/controller"
 	"github.com/sonujose/sloop/pkg/config"
+	"github.com/sonujose/sloop/pkg/console"
+	"github.com/sonujose/sloop/pkg/core/history"
 	sloopSync "github.com/sonujose/sloop/pkg/core/sync"
 	"github.com/sonujose/sloop/pkg/core/template"
 	"github.com/sonujose/sloop/pkg/kube"
@@ -66,9 +68,44 @@ var syncCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
+var syncHistoryCmd = &cobra.Command{
+	Use:     "history",
+	Aliases: []string{"h"},
+	Short:   "List the sync history if the specified sloop config.",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		l := logger.NewLogger()
+
+		l.SetLevel(logrus.Level(loglevel))
+
+		sloopConfig, err := config.ParseSloopConfig(l, configFile)
+		if err != nil {
+			return err
+		}
+
+		kclient, err := kube.NewClient()
+
+		if err != nil {
+			l.Errorf("Error connecting to cluster via clientcmd. Aborting...")
+			return err
+		}
+
+		hs := history.New(kclient)
+		syncHistory, err := hs.ListSyncHistory(sloopConfig.Metadata.Name, sloopConfig.Metadata.Namespace)
+		if err != nil {
+			return err
+		}
+
+		console.PrintSyncHistory(syncHistory)
+
+		return nil
+	},
+	SilenceUsage: true,
+}
+
 func init() {
 	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dryrun", "d", false, "Use dry run to test the sloop configurations.")
 	syncCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "specify the global namespace for syncing sloop config")
 
+	syncCmd.AddCommand(syncHistoryCmd)
 	rootCmd.AddCommand(syncCmd)
 }

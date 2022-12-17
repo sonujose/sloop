@@ -7,7 +7,8 @@ type SloopConfig struct {
 	Spec       Spec     `yaml:"spec"`
 }
 type Metadata struct {
-	Name string `yaml:"name"`
+	Name      string `yaml:"name"`
+	Namespace string `yaml:"namespace"`
 }
 type Global struct {
 	Namespace string `yaml:"namespace"`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"sort"
 	"strconv"
+	"time"
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,18 +22,43 @@ func New(kclient *kubernetes.Clientset) *SloopHistory {
 	}
 }
 
-type SloopConfigSecretMeta struct {
-	revision   int
-	owner      string
-	name       string
-	modifiedAt int64
+type SyncHistoryObj struct {
+	Revision string
+	Package  string
+	Updated  time.Time
+	Version  string
+}
+
+func (h *SloopHistory) ListSyncHistory(name string, namespace string) ([]SyncHistoryObj, error) {
+
+	var syncHistory []SyncHistoryObj
+	syncSecretList, err := h.GetPackageSyncHistory(name, namespace)
+
+	if err != nil {
+		return nil, err
+	}
+
+	for _, syncSecret := range syncSecretList {
+
+		updatedOn := time.Unix(syncSecret.CreationTimestamp.Unix(), 0)
+
+		sh := SyncHistoryObj{
+			Revision: syncSecret.Labels["revision"],
+			Updated:  updatedOn,
+			Package:  syncSecret.Labels["package"],
+			Version:  syncSecret.Labels["version"],
+		}
+		syncHistory = append(syncHistory, sh)
+	}
+
+	return syncHistory, nil
 }
 
 func (h *SloopHistory) GetPackageSyncHistory(name string, namespace string) ([]v1.Secret, error) {
 
 	ctx := context.Background()
 
-	lsel := kblabels.Set{"owner": "sloop", "name": name}.AsSelector()
+	lsel := kblabels.Set{"owner": "sloop", "package": name}.AsSelector()
 	opts := metav1.ListOptions{LabelSelector: lsel.String()}
 
 	secretList, err := h.KubeClient.CoreV1().Secrets(namespace).List(ctx, opts)
@@ -41,11 +67,13 @@ func (h *SloopHistory) GetPackageSyncHistory(name string, namespace string) ([]v
 		return nil, err
 	}
 
-	sort.Slice(secretList.Items, func(i, j int) bool {
-		l, _ := strconv.Atoi(secretList.Items[i].Labels["modifiedAt"])
-		v, _ := strconv.Atoi(secretList.Items[j].Labels["modifiedAt"])
-		return l > v
-	})
+	if len(secretList.Items) > 1 {
+		sort.Slice(secretList.Items, func(i, j int) bool {
+			l, _ := strconv.Atoi(secretList.Items[i].Labels["updated"])
+			v, _ := strconv.Atoi(secretList.Items[j].Labels["updated"])
+			return l > v
+		})
+	}
 
 	var secretMetaList = secretList.Items
 
