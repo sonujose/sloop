@@ -11,6 +11,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/client"
 	"github.com/sonujose/sloop/apis/v1/controller"
+	"github.com/sonujose/sloop/pkg/core/consts"
 	"github.com/sonujose/sloop/pkg/core/history"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
@@ -57,13 +58,13 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 
 	secretName := getSloopConfigSecretName(s.sloopPkg.Spec.Version, s.sloopPkg.Metadata.Name, newSyncRevision)
 
-	sloopConfigSecretLabels := map[string]string{
-		"updated":    fmt.Sprint(deployedOn.Unix()),
-		"package":    s.sloopPkg.Metadata.Name,
-		"owner":      "sloop",
-		"revision":   fmt.Sprint(newSyncRevision),
-		"version":    s.sloopPkg.Spec.Version,
-		"components": fmt.Sprint(len(s.sloopPkg.Spec.Components)),
+	s1 := &consts.SloopConfigSecretLabels{
+		Components: fmt.Sprint(len(s.sloopPkg.Spec.Components)),
+		Package:    s.sloopPkg.Metadata.Name,
+		Revision:   fmt.Sprint(newSyncRevision),
+		Status:     consts.StatusRegistered,
+		Updated:    fmt.Sprint(deployedOn.Unix()),
+		Version:    s.sloopPkg.Spec.Version,
 	}
 
 	SloopControllerSecret := &corev1.Secret{
@@ -71,7 +72,7 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: s.sloopPkg.Metadata.Namespace,
-			Labels:    sloopConfigSecretLabels,
+			Labels:    s1.GetConfigLabels(),
 		},
 		TypeMeta: metav1.TypeMeta{},
 		Type:     corev1.SecretType(fmt.Sprintf("sloop.io/%s", s.sloopPkg.Metadata.Name)),
@@ -88,7 +89,7 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 	sloopDeploymentStatus, _ := yaml.Marshal(s.controllerCfg.Status)
 
 	// CONSOLE-INFO : SYNC OPERATION STATUS
-	fmt.Println("All done! Synced sloop configuration for controller")
+	fmt.Println("All done! Registered sloop configuration for controller")
 	fmt.Println(string(sloopDeploymentStatus))
 
 	return nil
