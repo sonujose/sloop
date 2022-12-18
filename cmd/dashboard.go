@@ -9,20 +9,20 @@ import (
 
 var dashboardCmd = &cobra.Command{
 	Use:     "dashboard",
-	Aliases: []string{"viz"},
-	Short:   "Open the sloop visualization dashboard",
+	Aliases: []string{"dash"},
+	Short:   "Opens the sloop dashboard",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		l := logger.NewLogger()
 
 		l.SetLevel(logrus.Level(loglevel))
 
-		sloopConfig, err := config.ParseSloopConfig(l, configFile)
+		sloopPkg, err := config.ParseSloopPackage(l, packagefile)
 		if err != nil {
 			return err
 		}
 
-		// TODO : Implement logic to analyze and generate report for sloop
-		l.Info(sloopConfig)
+		// TODO : Implement logic
+		l.Info(sloopPkg)
 
 		return nil
 	},

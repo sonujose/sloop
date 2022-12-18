@@ -9,23 +9,23 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "sloop",
-	Short: "Sloop is a package manager for lazy kubernetes folks",
-	Long:  `Sloop is a kubernetes package manager designed for all lazy devops folks. It helps in deploying, packaging and managing kubernetes artifacts.`,
+	Short: "Sloop is a package manager for all lazy kubernetes folks out there",
+	Long:  `Sloop is a kubernetes package manager designed for all lazy devops folks. It helps to simplify deploying, packaging and managing kubernetes artifacts.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		return
 	},
 }
 
 var (
-	loglevel   uint32
-	configFile string
+	loglevel    uint32
+	packagefile string
 )
 
 func init() {
 	cobra.OnInitialize()
 
 	rootCmd.PersistentFlags().Uint32VarP(&loglevel, "verbosity", "v", uint32(logrus.InfoLevel), "verbosity level of the log")
-	rootCmd.PersistentFlags().StringVarP(&configFile, "config", "f", "", "sloop config file path")
+	rootCmd.PersistentFlags().StringVarP(&packagefile, "packagefile", "f", "", "sloop package file path")
 }
 
 func Execute() {

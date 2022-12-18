@@ -5,36 +5,36 @@ import (
 	"path/filepath"
 
 	"github.com/sirupsen/logrus"
-	"github.com/sonujose/sloop/apis/v1/config"
+	"github.com/sonujose/sloop/apis/v1/client"
 	"gopkg.in/yaml.v2"
 )
 
 const (
-	defaultSloopConfigFileName string = "./sloop.yaml"
+	defaultSloopPkgFile string = "./sloop.yaml"
 )
 
-func ParseSloopConfig(log *logrus.Logger, configFile string) (*config.SloopConfig, error) {
+func ParseSloopPackage(log *logrus.Logger, sloopPkgFile string) (*client.SloopPackage, error) {
 
-	if configFile == "" {
-		configFile = defaultSloopConfigFileName
+	if sloopPkgFile == "" {
+		sloopPkgFile = defaultSloopPkgFile
 	}
 
-	// Read the sloop condif yaml file and parse the details
-	filename, _ := filepath.Abs(configFile)
+	// Read the sloop pkg yaml file and parse the details
+	filename, _ := filepath.Abs(sloopPkgFile)
 	yamlFile, err := ioutil.ReadFile(filename)
 
 	if err != nil {
-		log.WithError(err).Errorf("Unable to find the sloop config file, please check if the file path is correct.")
+		log.Errorf("Unable to find the sloop package file, please check if the file path is correct.")
 		return nil, err
 	}
 
-	var config config.SloopConfig
+	var sloopPkg client.SloopPackage
 
-	err = yaml.Unmarshal(yamlFile, &config)
+	err = yaml.Unmarshal(yamlFile, &sloopPkg)
 	if err != nil {
-		log.WithError(err).Errorf("Error parsing the sloop config")
+		log.Errorf("Error parsing the sloop package")
 		return nil, err
 	}
 
-	return &config, nil
+	return &sloopPkg, nil
 }

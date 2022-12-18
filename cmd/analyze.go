@@ -10,19 +10,19 @@ import (
 var analyzeCmd = &cobra.Command{
 	Use:     "analyze",
 	Aliases: []string{"a"},
-	Short:   "Analyze the sloop config file and generate parse report",
+	Short:   "Analyze the sloop package file and generate parse report",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		l := logger.NewLogger()
 
 		l.SetLevel(logrus.Level(loglevel))
 
-		sloopConfig, err := config.ParseSloopConfig(l, configFile)
+		sloopPkg, err := config.ParseSloopPackage(l, packagefile)
 		if err != nil {
 			return err
 		}
 
 		// TODO : Implement logic to analyze and generate report for sloop
-		l.Info(sloopConfig)
+		l.Info(sloopPkg)
 
 		return nil
 	},

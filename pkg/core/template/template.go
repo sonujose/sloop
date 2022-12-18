@@ -10,26 +10,26 @@ import (
 	"text/template"
 
 	"github.com/sirupsen/logrus"
-	"github.com/sonujose/sloop/apis/v1/config"
+	"github.com/sonujose/sloop/apis/v1/client"
 	"github.com/sonujose/sloop/apis/v1/controller"
 	yaml "gopkg.in/yaml.v2"
 )
 
 type SloopTemplate struct {
-	SloopCfg *config.SloopConfig
+	sloopPkg *client.SloopPackage
 }
 
-func New(cfg *config.SloopConfig) *SloopTemplate {
-	return &SloopTemplate{SloopCfg: cfg}
+func New(pkg *client.SloopPackage) *SloopTemplate {
+	return &SloopTemplate{sloopPkg: pkg}
 }
 
 func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controller.SloopControllerConfig, error) {
 
-	configuratorObj := t.SloopCfg
+	configuratorObj := t.sloopPkg
 	var componentManifest bytes.Buffer
 
 	sloopSyncConfiguration := &controller.SloopControllerConfig{
-		Name: t.SloopCfg.Metadata.Name,
+		Name: t.sloopPkg.Metadata.Name,
 	}
 
 	for _, j := range configuratorObj.Spec.Components {

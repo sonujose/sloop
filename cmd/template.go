@@ -21,11 +21,11 @@ var templateCmd = &cobra.Command{
 
 		l.SetLevel(logrus.Level(loglevel))
 
-		sloopConfig, err := config.ParseSloopConfig(l, configFile)
+		sloopPkg, err := config.ParseSloopPackage(l, packagefile)
 		if err != nil {
 			return err
 		}
-		tr := template.New(sloopConfig)
+		tr := template.New(sloopPkg)
 
 		var sloopCtrlConfig *controller.SloopControllerConfig
 

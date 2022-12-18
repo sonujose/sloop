@@ -1,14 +1,14 @@
-package config
+package client
 
-type SloopConfig struct {
-	APIVersion string   `yaml:"apiVersion"`
-	Kind       string   `yaml:"Kind"`
+type SloopPackage struct {
+	APIVersion string   `yaml:"apiVersion" default:"app.sloop.io/v1"`
+	Kind       string   `yaml:"Kind" default:"SloopPackage"`
 	Metadata   Metadata `yaml:"metadata"`
 	Spec       Spec     `yaml:"spec"`
 }
 type Metadata struct {
 	Name      string `yaml:"name"`
-	Namespace string `yaml:"namespace"`
+	Namespace string `yaml:"namespace" default:"sloop"`
 }
 type Global struct {
 	Namespace string `yaml:"namespace"`

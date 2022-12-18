@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
-	"github.com/sonujose/sloop/apis/v1/config"
+	"github.com/sonujose/sloop/apis/v1/client"
 	"github.com/sonujose/sloop/apis/v1/controller"
 	"github.com/sonujose/sloop/pkg/core/history"
 	"gopkg.in/yaml.v2"
@@ -20,13 +20,13 @@ import (
 )
 
 type SyncConfig struct {
-	SloopCfg      *config.SloopConfig
-	ControllerCfg *controller.SloopControllerConfig
-	KubeClient    *kubernetes.Clientset
+	sloopPkg      *client.SloopPackage
+	controllerCfg *controller.SloopControllerConfig
+	kubeClient    *kubernetes.Clientset
 }
 
-func New(cfg *config.SloopConfig, ctrlCfg *controller.SloopControllerConfig, kclient *kubernetes.Clientset) *SyncConfig {
-	return &SyncConfig{SloopCfg: cfg, ControllerCfg: ctrlCfg, KubeClient: kclient}
+func New(cfg *client.SloopPackage, ctrlCfg *controller.SloopControllerConfig, kclient *kubernetes.Clientset) *SyncConfig {
+	return &SyncConfig{sloopPkg: cfg, controllerCfg: ctrlCfg, kubeClient: kclient}
 }
 
 func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
@@ -36,7 +36,7 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 	deployedOn := time.Now()
 	var lastSyncRevision int
 
-	lastSyncRevision, err := getLastSyncRevision(s.KubeClient, s.SloopCfg.Metadata.Name, "sloop")
+	lastSyncRevision, err := getLastSyncRevision(s.kubeClient, s.sloopPkg.Metadata.Name, "sloop")
 	if err != nil {
 		l.Debugf("Unable to find any sync revison for the specified sloop package, creating the first revision. reason=%v", err)
 	}
@@ -45,47 +45,47 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 
 	configStatus := controller.Status{
 		DeployedOn:   fmt.Sprint(deployedOn),
-		Version:      s.SloopCfg.Spec.Version,
+		Version:      s.sloopPkg.Spec.Version,
 		SyncRevision: newSyncRevision,
-		Components:   len(s.SloopCfg.Spec.Components),
-		Name:         s.SloopCfg.Metadata.Name,
+		Components:   len(s.sloopPkg.Spec.Components),
+		Name:         s.sloopPkg.Metadata.Name,
 	}
 
-	s.ControllerCfg.Status = configStatus
-	blob, _ := json.Marshal(s.ControllerCfg)
+	s.controllerCfg.Status = configStatus
+	blob, _ := json.Marshal(s.controllerCfg)
 	kcSecretBlob["config"] = blob
 
-	secretName := getSloopConfigSecretName(s.SloopCfg.Spec.Version, s.SloopCfg.Metadata.Name, newSyncRevision)
+	secretName := getSloopConfigSecretName(s.sloopPkg.Spec.Version, s.sloopPkg.Metadata.Name, newSyncRevision)
 
 	sloopConfigSecretLabels := map[string]string{
 		"updated":    fmt.Sprint(deployedOn.Unix()),
-		"package":    s.SloopCfg.Metadata.Name,
+		"package":    s.sloopPkg.Metadata.Name,
 		"owner":      "sloop",
 		"revision":   fmt.Sprint(newSyncRevision),
-		"version":    s.SloopCfg.Spec.Version,
-		"components": fmt.Sprint(len(s.SloopCfg.Spec.Components)),
+		"version":    s.sloopPkg.Spec.Version,
+		"components": fmt.Sprint(len(s.sloopPkg.Spec.Components)),
 	}
 
 	SloopControllerSecret := &corev1.Secret{
 		Data: kcSecretBlob,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
-			Namespace: s.SloopCfg.Metadata.Namespace,
+			Namespace: s.sloopPkg.Metadata.Namespace,
 			Labels:    sloopConfigSecretLabels,
 		},
 		TypeMeta: metav1.TypeMeta{},
-		Type:     corev1.SecretType(fmt.Sprintf("sloop.io/%s", s.SloopCfg.Metadata.Name)),
+		Type:     corev1.SecretType(fmt.Sprintf("sloop.io/%s", s.sloopPkg.Metadata.Name)),
 	}
 
 	ctx := context.Background()
-	_, err = s.KubeClient.CoreV1().Secrets(s.SloopCfg.Metadata.Namespace).Create(ctx, SloopControllerSecret, metav1.CreateOptions{})
+	_, err = s.kubeClient.CoreV1().Secrets(s.sloopPkg.Metadata.Namespace).Create(ctx, SloopControllerSecret, metav1.CreateOptions{})
 
 	if err != nil {
 		l.Errorf("Error creating sloop config secret.")
 		return err
 	}
 
-	sloopDeploymentStatus, _ := yaml.Marshal(s.ControllerCfg.Status)
+	sloopDeploymentStatus, _ := yaml.Marshal(s.controllerCfg.Status)
 
 	// CONSOLE-INFO : SYNC OPERATION STATUS
 	fmt.Println("All done! Synced sloop configuration for controller")

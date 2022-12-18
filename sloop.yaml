@@ -1,7 +1,7 @@
 apiVersion: app.sloop.io/v1 
-Kind: SloopConfig
+Kind: SloopPackage
 metadata:
-  name: sloop-config-dev
+  name: sloop-package-dev
   namespace: sloop
 spec:
   template: default

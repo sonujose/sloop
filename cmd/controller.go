@@ -9,20 +9,20 @@ import (
 
 var controllerCmd = &cobra.Command{
 	Use:     "controller",
-	Aliases: []string{"viz"},
-	Short:   "Setup the sloop controller",
+	Aliases: []string{"c"},
+	Short:   "sloop controller operations",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		l := logger.NewLogger()
 
 		l.SetLevel(logrus.Level(loglevel))
 
-		sloopConfig, err := config.ParseSloopConfig(l, configFile)
+		sloopPkg, err := config.ParseSloopPackage(l, packagefile)
 		if err != nil {
 			return err
 		}
 
-		// TODO : Implement logic to analyze and generate report for sloop
-		l.Info(sloopConfig)
+		// TODO : Implement logic
+		l.Info(sloopPkg)
 
 		return nil
 	},
@@ -38,13 +38,13 @@ var controllerInstallCmd = &cobra.Command{
 
 		l.SetLevel(logrus.Level(loglevel))
 
-		sloopConfig, err := config.ParseSloopConfig(l, configFile)
+		sloopPkg, err := config.ParseSloopPackage(l, packagefile)
 		if err != nil {
 			return err
 		}
 
-		// TODO : Implement logic to analyze and generate report for sloop
-		l.Info(sloopConfig)
+		// TODO : Implement logic to install sloop controller
+		l.Info(sloopPkg)
 
 		return nil
 	},

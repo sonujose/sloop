@@ -25,17 +25,17 @@ var (
 var syncCmd = &cobra.Command{
 	Use:     "sync",
 	Aliases: []string{"s"},
-	Short:   "Apply the sloop config to the cluster, sync the desired state from the sloop config file",
+	Short:   "Creates the desired state from the sloop package file and apply the sloop config to the cluster",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		l := logger.NewLogger()
 
 		l.SetLevel(logrus.Level(loglevel))
 
-		sloopConfig, err := config.ParseSloopConfig(l, configFile)
+		sloopPkg, err := config.ParseSloopPackage(l, packagefile)
 		if err != nil {
 			return err
 		}
-		tr := template.New(sloopConfig)
+		tr := template.New(sloopPkg)
 
 		var sloopCtrlConfig *controller.SloopControllerConfig
 
@@ -57,7 +57,7 @@ var syncCmd = &cobra.Command{
 			return err
 		}
 
-		ss := sloopSync.New(sloopConfig, sloopCtrlConfig, kclient)
+		ss := sloopSync.New(sloopPkg, sloopCtrlConfig, kclient)
 
 		err = ss.SyncPackage(l)
 
@@ -79,7 +79,7 @@ var syncHistoryCmd = &cobra.Command{
 
 		l.SetLevel(logrus.Level(loglevel))
 
-		sloopConfig, err := config.ParseSloopConfig(l, configFile)
+		sloopPkg, err := config.ParseSloopPackage(l, packagefile)
 		if err != nil {
 			return err
 		}
@@ -93,7 +93,7 @@ var syncHistoryCmd = &cobra.Command{
 
 		hs := history.New(kclient)
 
-		syncHistory, err := hs.ListSyncHistory(sloopConfig.Metadata.Name, sloopConfig.Metadata.Namespace, allpackages)
+		syncHistory, err := hs.ListSyncHistory(sloopPkg.Metadata.Name, sloopPkg.Metadata.Namespace, allpackages)
 		if err != nil {
 			return err
 		}
@@ -101,7 +101,7 @@ var syncHistoryCmd = &cobra.Command{
 		if len(syncHistory) > 0 {
 			console.PrintSyncHistory(syncHistory)
 		} else {
-			fmt.Println("No sync history found for the package -", sloopConfig.Metadata.Name)
+			fmt.Println("No sync history found for the package -", sloopPkg.Metadata.Name)
 		}
 
 		return nil
