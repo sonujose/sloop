@@ -46,9 +46,9 @@ func (s *SyncConfig) cleanOldRegisteredRevisions(rev string) error {
 	}
 
 	for _, secretCopy := range syncHistoryPending {
-		if secretCopy.Labels["revision"] != rev {
+		if secretCopy.Labels[consts.ConfigLabelRevision] != rev {
 
-			secretCopy.Labels["status"] = consts.StatusAborted
+			secretCopy.Labels[consts.ConfigLabelStatus] = consts.StatusAborted
 
 			// Update secret with new label status
 			_, err := s.kubeClient.CoreV1().Secrets(s.sloopPkg.Metadata.Namespace).Update(context.Background(), &secretCopy, metav1.UpdateOptions{})

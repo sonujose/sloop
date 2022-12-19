@@ -145,7 +145,7 @@ func init() {
 	// sync history flags
 	syncHistoryCmd.PersistentFlags().BoolVarP(&allpackages, "allpackages", "a", false, "get history from all the packages")
 	// sync clean flags
-	syncCleanCmd.PersistentFlags().StringVarP(&revision, "revision", "rev", "", "specify the sync revision that needs to be cleaned")
+	syncCleanCmd.PersistentFlags().StringVarP(&revision, "revision", "r", "", "specify the sync revision that needs to be cleaned")
 	// Commands
 	syncCmd.AddCommand(syncHistoryCmd)
 	syncCmd.AddCommand(syncCleanCmd)

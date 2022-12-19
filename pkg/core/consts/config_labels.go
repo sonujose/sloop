@@ -2,6 +2,16 @@ package consts
 
 import "encoding/json"
 
+const (
+	ConfigLabelComponents string = "components"
+	ConfigLabelOwner      string = "owner"
+	ConfigLabelPackage    string = "package"
+	ConfigLabelRevision   string = "revision"
+	ConfigLabelStatus     string = "status"
+	ConfigLabelUpdated    string = "updated"
+	ConfigLabelVersion    string = "version"
+)
+
 type SloopConfigSecretLabels struct {
 	Components string `json:"components"`
 	Owner      string `json:"owner" default:"sloop"`

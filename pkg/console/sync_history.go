@@ -9,7 +9,7 @@ import (
 	"github.com/sonujose/sloop/pkg/core/history"
 )
 
-func PrintSyncHistory(hs []history.SyncHistoryObj) {
+func PrintSyncHistory(hs []history.SyncHistory) {
 
 	t := newTableInstance()
 	t.AppendHeader(table.Row{"PACKAGE", "REV", "STATUS", "COMPONENTS", "CREATED", "VERSION"})

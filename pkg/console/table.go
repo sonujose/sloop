@@ -11,7 +11,6 @@ func newTableInstance() table.Writer {
 	t.SetOutputMirror(os.Stdout)
 	t.SetStyle(getDefaultTableStyle())
 	return t
-
 }
 
 func getDefaultTableStyle() table.Style {

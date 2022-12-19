@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/sonujose/sloop/pkg/core/consts"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	klabel "k8s.io/apimachinery/pkg/labels"
@@ -22,7 +23,7 @@ func New(kclient *kubernetes.Clientset) *SloopHistory {
 	}
 }
 
-type SyncHistoryObj struct {
+type SyncHistory struct {
 	Revision   string
 	Package    string
 	Updated    time.Time
@@ -31,9 +32,9 @@ type SyncHistoryObj struct {
 	Status     string
 }
 
-func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackages bool) ([]SyncHistoryObj, error) {
+func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackages bool) ([]SyncHistory, error) {
 
-	var syncHistory []SyncHistoryObj
+	var syncHistory []SyncHistory
 
 	var labelSel klabel.Selector
 
@@ -53,13 +54,13 @@ func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackage
 
 		updatedOn := time.Unix(syncSecret.CreationTimestamp.Unix(), 0)
 
-		sh := SyncHistoryObj{
-			Revision:   syncSecret.Labels["revision"],
+		sh := SyncHistory{
+			Revision:   syncSecret.Labels[consts.ConfigLabelRevision],
 			Updated:    updatedOn,
-			Package:    syncSecret.Labels["package"],
-			Version:    syncSecret.Labels["version"],
-			Components: syncSecret.Labels["components"],
-			Status:     syncSecret.Labels["status"],
+			Package:    syncSecret.Labels[consts.ConfigLabelPackage],
+			Version:    syncSecret.Labels[consts.ConfigLabelVersion],
+			Components: syncSecret.Labels[consts.ConfigLabelComponents],
+			Status:     syncSecret.Labels[consts.ConfigLabelStatus],
 		}
 		syncHistory = append(syncHistory, sh)
 	}
@@ -80,8 +81,8 @@ func (h *SloopHistory) GetPackageSyncHistorybyLabels(labelSelector klabel.Select
 
 	if len(secretList.Items) > 1 {
 		sort.Slice(secretList.Items, func(i, j int) bool {
-			l, _ := strconv.Atoi(secretList.Items[i].Labels["updated"])
-			v, _ := strconv.Atoi(secretList.Items[j].Labels["updated"])
+			l, _ := strconv.Atoi(secretList.Items[i].Labels[consts.ConfigLabelUpdated])
+			v, _ := strconv.Atoi(secretList.Items[j].Labels[consts.ConfigLabelUpdated])
 			return l < v
 		})
 	}
