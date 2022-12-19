@@ -20,6 +20,7 @@ var (
 	dryrun      bool
 	namespace   string
 	allpackages bool
+	revision    string
 )
 
 var syncCmd = &cobra.Command{
@@ -109,10 +110,45 @@ var syncHistoryCmd = &cobra.Command{
 	SilenceUsage: true,
 }
 
+var syncCleanCmd = &cobra.Command{
+	Use:     "clean",
+	Aliases: []string{"c"},
+	Short:   "Cleans the specified revision metadata of the package from the sloop db (Use 'delete' command to remove the components installation from the cluster.)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		l := logger.NewLogger()
+
+		l.SetLevel(logrus.Level(loglevel))
+
+		return nil
+	},
+	SilenceUsage: true,
+}
+
+var syncDeleteCmd = &cobra.Command{
+	Use:     "delete",
+	Aliases: []string{"d"},
+	Short:   "Use this command to remove the components installation from the cluster.)",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		l := logger.NewLogger()
+
+		l.SetLevel(logrus.Level(loglevel))
+
+		return nil
+	},
+	SilenceUsage: true,
+}
+
 func init() {
+	// sync flags
 	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dryrun", "d", false, "Use dry run to test the sloop configurations.")
-	syncCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "specify the global namespace for syncing sloop config")
+	syncCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "specify the namespace for syncing sloop config")
+	// sync history flags
 	syncHistoryCmd.PersistentFlags().BoolVarP(&allpackages, "allpackages", "a", false, "get history from all the packages")
+	// sync clean flags
+	syncCleanCmd.PersistentFlags().StringVarP(&revision, "revision", "rev", "", "specify the sync revision that needs to be cleaned")
+	// Commands
 	syncCmd.AddCommand(syncHistoryCmd)
+	syncCmd.AddCommand(syncCleanCmd)
+	syncCmd.AddCommand(syncDeleteCmd)
 	rootCmd.AddCommand(syncCmd)
 }

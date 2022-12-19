@@ -19,6 +19,7 @@ var rootCmd = &cobra.Command{
 var (
 	loglevel    uint32
 	packagefile string
+	component   string
 )
 
 func init() {
@@ -26,6 +27,7 @@ func init() {
 
 	rootCmd.PersistentFlags().Uint32VarP(&loglevel, "verbosity", "v", uint32(logrus.InfoLevel), "verbosity level of the log")
 	rootCmd.PersistentFlags().StringVarP(&packagefile, "packagefile", "f", "", "sloop package file path")
+	rootCmd.PersistentFlags().StringVarP(&component, "component", "c", "", "specify component in the package")
 }
 
 func Execute() {
