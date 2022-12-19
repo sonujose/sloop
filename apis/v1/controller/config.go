@@ -1,9 +1,11 @@
 package controller
 
+import "time"
+
 type SloopControllerConfig struct {
-	Name   string `json:"name"`
-	Config Config `json:"config"`
-	Status Status `json:"status"`
+	Name   string            `json:"name"`
+	Config Config            `json:"config"`
+	Status SloopConfigStatus `json:"status"`
 }
 type TemplateFile struct {
 	FileName     string `json:"fileName"`
@@ -19,10 +21,12 @@ type Config struct {
 	Components           []Component `json:"components"`
 	ConsolidatedManifest string      `json:"consolidated_manifest"`
 }
-type Status struct {
-	DeployedOn   string `json:"deployed_on" yaml:"updated"`
-	SyncRevision int    `json:"sync_revision" yaml:"revision"`
-	Version      string `json:"version" yaml:"version"`
-	Components   int    `json:"components" yaml:"components"`
-	Name         string `json:"name" yaml:"name"`
+
+//SloopConfigStatus - The overall status of the sloop config sync action
+type SloopConfigStatus struct {
+	DeployedOn   time.Time `json:"deployed_on" yaml:"updated"`
+	SyncRevision int       `json:"sync_revision" yaml:"revision"`
+	Version      string    `json:"version" yaml:"version"`
+	Components   string    `json:"components" yaml:"components"`
+	Name         string    `json:"name" yaml:"name"`
 }

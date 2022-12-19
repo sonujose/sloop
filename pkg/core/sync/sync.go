@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -15,7 +14,6 @@ import (
 	"github.com/sonujose/sloop/pkg/core/history"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -30,53 +28,45 @@ func New(cfg *client.SloopPackage, ctrlCfg *controller.SloopControllerConfig, kc
 	return &SyncConfig{sloopPkg: cfg, controllerCfg: ctrlCfg, kubeClient: kclient}
 }
 
+//SyncPackage - Compiles sloop package to generate sloop-config and apply the same to the sloop namespace
 func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 
-	kcSecretBlob := make(map[string][]byte)
-
-	deployedOn := time.Now()
 	var lastSyncRevision int
 
-	lastSyncRevision, err := getLastSyncRevision(s.kubeClient, s.sloopPkg.Metadata.Name, "sloop")
-	if err != nil {
-		l.Debugf("Unable to find any sync revison for the specified sloop package, creating the first revision. reason=%v", err)
+	hs := history.New(s.kubeClient)
+
+	labelSel := history.GetPackageHistoryLabelSelectors(history.PackageHistoryFilterKey, s.sloopPkg.Metadata.Name)
+	syncHistory, err := hs.GetPackageSyncHistorybyLabels(labelSel, s.sloopPkg.Metadata.Namespace)
+
+	if err != nil || len(syncHistory) == 0 {
+		lastSyncRevision = 0
+	} else {
+		lastSyncRevision, err = getLastSyncRevision(syncHistory)
+
+		if err != nil {
+			l.Debugf("Unable to find any sync revison for the specified sloop package, creating the first revision. reason=%v", err)
+			lastSyncRevision = 0
+		}
 	}
 
-	newSyncRevision := lastSyncRevision + 1
+	syncRevision := lastSyncRevision + 1
 
-	configStatus := controller.Status{
-		DeployedOn:   fmt.Sprint(deployedOn),
+	deployedOn := time.Now()
+
+	configStatus := controller.SloopConfigStatus{
+		DeployedOn:   deployedOn,
 		Version:      s.sloopPkg.Spec.Version,
-		SyncRevision: newSyncRevision,
-		Components:   len(s.sloopPkg.Spec.Components),
+		SyncRevision: syncRevision,
+		Components:   fmt.Sprintf("0/%d", len(s.sloopPkg.Spec.Components)),
 		Name:         s.sloopPkg.Metadata.Name,
 	}
 
 	s.controllerCfg.Status = configStatus
-	blob, _ := json.Marshal(s.controllerCfg)
-	kcSecretBlob["config"] = blob
 
-	secretName := getSloopConfigSecretName(s.sloopPkg.Spec.Version, s.sloopPkg.Metadata.Name, newSyncRevision)
+	secretDataBlob, _ := json.Marshal(s.controllerCfg)
+	secretName := s.getSloopConfigSecretName(syncRevision)
 
-	syncLabels := &consts.SloopConfigSecretLabels{
-		Components: fmt.Sprint(len(s.sloopPkg.Spec.Components)),
-		Package:    s.sloopPkg.Metadata.Name,
-		Revision:   fmt.Sprint(newSyncRevision),
-		Status:     consts.StatusRegistered,
-		Updated:    fmt.Sprint(deployedOn.Unix()),
-		Version:    s.sloopPkg.Spec.Version,
-	}
-
-	SloopControllerSecret := &corev1.Secret{
-		Data: kcSecretBlob,
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      secretName,
-			Namespace: s.sloopPkg.Metadata.Namespace,
-			Labels:    syncLabels.GetConfigLabels(),
-		},
-		TypeMeta: metav1.TypeMeta{},
-		Type:     corev1.SecretType(fmt.Sprintf("sloop.io/%s", s.sloopPkg.Metadata.Name)),
-	}
+	SloopControllerSecret := s.getSloopConfigSecretObj(secretName, secretDataBlob, configStatus)
 
 	ctx := context.Background()
 	_, err = s.kubeClient.CoreV1().Secrets(s.sloopPkg.Metadata.Namespace).Create(ctx, SloopControllerSecret, metav1.CreateOptions{})
@@ -89,37 +79,10 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 	sloopDeploymentStatus, _ := yaml.Marshal(s.controllerCfg.Status)
 
 	// CONSOLE-INFO : SYNC OPERATION STATUS
-	fmt.Println("All done! Registered sloop configuration for controller")
+	fmt.Println("Succeeded!! Registered sloop configuration for the package")
 	fmt.Println(string(sloopDeploymentStatus))
 
 	return nil
-}
-
-func getLastSyncRevision(KubeClient *kubernetes.Clientset, name string, namespace string) (int, error) {
-
-	hs := history.New(KubeClient)
-	syncHistory, err := hs.GetPackageSyncHistory(name, namespace, false)
-
-	var lastrev int = 0
-
-	if err != nil {
-		return lastrev, fmt.Errorf("Unable to fetch sync history from the cluster. error=%v", err)
-	}
-
-	var lastSyncExecutionMeta v1.Secret
-
-	if len(syncHistory) == 0 {
-		return lastrev, fmt.Errorf("No previous sync revisions found")
-	}
-
-	lastSyncExecutionMeta = syncHistory[0]
-
-	lastrev, err = strconv.Atoi(lastSyncExecutionMeta.Labels["revision"])
-	if err != nil {
-		return lastrev, err
-	}
-
-	return lastrev, nil
 }
 
 /*
@@ -127,7 +90,39 @@ generateSloopConfigCurrentSecretName
 sconfig.sloop.v100.sloop-config-dev.v2
 config.sloop.v<version>.<sloop-configname>.v<rev.
 */
-func getSloopConfigSecretName(version string, name string, syncVersion int) string {
-	sloopVersionStr := strings.Replace(version, ".", "", -1)
-	return fmt.Sprintf("config.sloop.v%s.%s.v%d", sloopVersionStr, name, syncVersion)
+func (s *SyncConfig) getSloopConfigSecretName(syncRevision int) string {
+	sloopVersionStr := strings.Replace(s.sloopPkg.Spec.Version, ".", "", -1)
+	return fmt.Sprintf("config.sloop.v%s.%s.v%d", sloopVersionStr, s.sloopPkg.Metadata.Name, syncRevision)
+}
+
+// getSloopConfigSecretObj
+// Returns the Kubernetes Secret object for sloop-config
+func (s *SyncConfig) getSloopConfigSecretObj(secretName string, secretData []byte, status controller.SloopConfigStatus) *corev1.Secret {
+
+	kcSecretBlob := make(map[string][]byte)
+	syncLabels := &consts.SloopConfigSecretLabels{
+		Components: fmt.Sprintf("0_%d", len(s.sloopPkg.Spec.Components)),
+		Package:    s.sloopPkg.Metadata.Name,
+		Revision:   fmt.Sprint(status.SyncRevision),
+		Status:     consts.StatusRegistered,
+		Updated:    fmt.Sprint(status.DeployedOn.Unix()),
+		Version:    s.sloopPkg.Spec.Version,
+		Owner:      consts.ToolName,
+	}
+
+	kcSecretBlob["config"] = secretData
+
+	SloopControllerSecret := &corev1.Secret{
+		Data: kcSecretBlob,
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      secretName,
+			Namespace: s.sloopPkg.Metadata.Namespace,
+			Labels:    syncLabels.GetConfigLabels(),
+		},
+		TypeMeta: metav1.TypeMeta{},
+		Type:     corev1.SecretType(fmt.Sprintf("sloop.io/%s", s.sloopPkg.Metadata.Name)),
+	}
+
+	return SloopControllerSecret
+
 }

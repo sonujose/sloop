@@ -8,7 +8,7 @@ import (
 
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	kblabels "k8s.io/apimachinery/pkg/labels"
+	klabel "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -28,19 +28,28 @@ type SyncHistoryObj struct {
 	Updated    time.Time
 	Version    string
 	Components string
-	Staus      string
+	Status     string
 }
 
 func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackages bool) ([]SyncHistoryObj, error) {
 
 	var syncHistory []SyncHistoryObj
-	syncSecretList, err := h.GetPackageSyncHistory(name, namespace, allpackages)
+
+	var labelSel klabel.Selector
+
+	if allpackages {
+		labelSel = GetPackageHistoryLabelSelectors(AllPackagesHistoryFilterKey, "")
+	} else {
+		labelSel = GetPackageHistoryLabelSelectors(PackageHistoryFilterKey, name)
+	}
+
+	pkgHistoryList, err := h.GetPackageSyncHistorybyLabels(labelSel, namespace)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, syncSecret := range syncSecretList {
+	for _, syncSecret := range pkgHistoryList {
 
 		updatedOn := time.Unix(syncSecret.CreationTimestamp.Unix(), 0)
 
@@ -50,7 +59,7 @@ func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackage
 			Package:    syncSecret.Labels["package"],
 			Version:    syncSecret.Labels["version"],
 			Components: syncSecret.Labels["components"],
-			Staus:      syncSecret.Labels["status"],
+			Status:     syncSecret.Labels["status"],
 		}
 		syncHistory = append(syncHistory, sh)
 	}
@@ -58,20 +67,12 @@ func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackage
 	return syncHistory, nil
 }
 
-func (h *SloopHistory) GetPackageSyncHistory(name string, namespace string, allpackages bool) ([]v1.Secret, error) {
+// GetPackageSyncHistory - returnd the package history info in descending order of deployment
+func (h *SloopHistory) GetPackageSyncHistorybyLabels(labelSelector klabel.Selector, namespace string) ([]v1.Secret, error) {
 
 	ctx := context.Background()
 
-	var lsel kblabels.Selector
-	if allpackages {
-		lsel = kblabels.Set{"owner": "sloop"}.AsSelector()
-	} else {
-		lsel = kblabels.Set{"owner": "sloop", "package": name}.AsSelector()
-	}
-
-	opts := metav1.ListOptions{LabelSelector: lsel.String()}
-
-	secretList, err := h.KubeClient.CoreV1().Secrets(namespace).List(ctx, opts)
+	secretList, err := h.KubeClient.CoreV1().Secrets(namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector.String()})
 
 	if err != nil {
 		return nil, err
