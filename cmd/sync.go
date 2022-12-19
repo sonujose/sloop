@@ -139,14 +139,10 @@ var syncDeleteCmd = &cobra.Command{
 }
 
 func init() {
-	// sync flags
 	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dryrun", "d", false, "Use dry run to test the sloop configurations.")
 	syncCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "specify the namespace for syncing sloop config")
-	// sync history flags
 	syncHistoryCmd.PersistentFlags().BoolVarP(&allpackages, "allpackages", "a", false, "get history from all the packages")
-	// sync clean flags
 	syncCleanCmd.PersistentFlags().StringVarP(&revision, "revision", "r", "", "specify the sync revision that needs to be cleaned")
-	// Commands
 	syncCmd.AddCommand(syncHistoryCmd)
 	syncCmd.AddCommand(syncCleanCmd)
 	syncCmd.AddCommand(syncDeleteCmd)
