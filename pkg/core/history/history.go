@@ -28,6 +28,7 @@ type SyncHistoryObj struct {
 	Updated    time.Time
 	Version    string
 	Components string
+	Staus      string
 }
 
 func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackages bool) ([]SyncHistoryObj, error) {
@@ -49,6 +50,7 @@ func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackage
 			Package:    syncSecret.Labels["package"],
 			Version:    syncSecret.Labels["version"],
 			Components: syncSecret.Labels["components"],
+			Staus:      syncSecret.Labels["status"],
 		}
 		syncHistory = append(syncHistory, sh)
 	}

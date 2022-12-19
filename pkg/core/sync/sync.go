@@ -58,7 +58,7 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 
 	secretName := getSloopConfigSecretName(s.sloopPkg.Spec.Version, s.sloopPkg.Metadata.Name, newSyncRevision)
 
-	s1 := &consts.SloopConfigSecretLabels{
+	syncLabels := &consts.SloopConfigSecretLabels{
 		Components: fmt.Sprint(len(s.sloopPkg.Spec.Components)),
 		Package:    s.sloopPkg.Metadata.Name,
 		Revision:   fmt.Sprint(newSyncRevision),
@@ -72,7 +72,7 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      secretName,
 			Namespace: s.sloopPkg.Metadata.Namespace,
-			Labels:    s1.GetConfigLabels(),
+			Labels:    syncLabels.GetConfigLabels(),
 		},
 		TypeMeta: metav1.TypeMeta{},
 		Type:     corev1.SecretType(fmt.Sprintf("sloop.io/%s", s.sloopPkg.Metadata.Name)),
