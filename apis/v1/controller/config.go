@@ -28,5 +28,5 @@ type SloopConfigStatus struct {
 	SyncRevision int       `json:"sync_revision" yaml:"revision"`
 	Version      string    `json:"version" yaml:"version"`
 	Components   string    `json:"components" yaml:"components"`
-	Name         string    `json:"name" yaml:"name"`
+	Name         string    `json:"name" yaml:"package"`
 }

@@ -17,7 +17,7 @@ func getLastSyncRevision(syncHistory []v1.Secret) (int, error) {
 		return lastrev, fmt.Errorf("No previous sync revisions found")
 	}
 
-	lastSyncExecutionMeta = syncHistory[0]
+	lastSyncExecutionMeta = syncHistory[len(syncHistory)-1]
 
 	lastrev, err := strconv.Atoi(lastSyncExecutionMeta.Labels["revision"])
 	if err != nil {

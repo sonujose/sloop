@@ -79,8 +79,8 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 	sloopDeploymentStatus, _ := yaml.Marshal(s.controllerCfg.Status)
 
 	// CONSOLE-INFO : SYNC OPERATION STATUS
-	fmt.Println("Succeeded!! Registered sloop configuration for the package")
 	fmt.Println(string(sloopDeploymentStatus))
+	fmt.Println("Succeeded!! Registered sloop configuration for the package")
 
 	return nil
 }

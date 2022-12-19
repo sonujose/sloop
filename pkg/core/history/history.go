@@ -82,7 +82,7 @@ func (h *SloopHistory) GetPackageSyncHistorybyLabels(labelSelector klabel.Select
 		sort.Slice(secretList.Items, func(i, j int) bool {
 			l, _ := strconv.Atoi(secretList.Items[i].Labels["updated"])
 			v, _ := strconv.Atoi(secretList.Items[j].Labels["updated"])
-			return l > v
+			return l < v
 		})
 	}
 

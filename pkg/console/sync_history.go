@@ -12,11 +12,11 @@ import (
 func PrintSyncHistory(hs []history.SyncHistoryObj) {
 
 	t := newTableInstance()
-	t.AppendHeader(table.Row{"REVISION", "UPDATED", "PACKAGE", "VERSION", "STATUS", "COMPONENTS"})
+	t.AppendHeader(table.Row{"PACKAGE", "REV", "STATUS", "COMPONENTS", "CREATED", "VERSION"})
 
 	for _, j := range hs {
 		updatedTime := j.Updated.Format(time.RFC1123)
-		t.AppendRow([]interface{}{j.Revision, updatedTime, j.Package, j.Version, j.Status, getComponentsStatus(j.Components)})
+		t.AppendRow([]interface{}{j.Package, j.Revision, j.Status, getComponentsStatus(j.Components), updatedTime, j.Version})
 	}
 
 	t.Render()
