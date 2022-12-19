@@ -48,7 +48,7 @@ var syncCmd = &cobra.Command{
 			return err
 		}
 
-		l.Debugf("\nSloop Controller config - %v", string(sloopCtrlInput))
+		l.Tracef("Sloop Controller config - %v", string(sloopCtrlInput))
 
 		kclient, err := kube.NewClient()
 
@@ -57,9 +57,9 @@ var syncCmd = &cobra.Command{
 			return err
 		}
 
-		ss := sloopSync.New(sloopPkg, sloopCtrlConfig, kclient)
+		ss := sloopSync.New(sloopPkg, sloopCtrlConfig, kclient, l)
 
-		err = ss.SyncPackage(l)
+		err = ss.SyncPackage()
 
 		if err != nil {
 			return err

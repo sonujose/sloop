@@ -22,14 +22,15 @@ type SyncConfig struct {
 	sloopPkg      *client.SloopPackage
 	controllerCfg *controller.SloopControllerConfig
 	kubeClient    *kubernetes.Clientset
+	log           *logrus.Logger
 }
 
-func New(cfg *client.SloopPackage, ctrlCfg *controller.SloopControllerConfig, kclient *kubernetes.Clientset) *SyncConfig {
-	return &SyncConfig{sloopPkg: cfg, controllerCfg: ctrlCfg, kubeClient: kclient}
+func New(cfg *client.SloopPackage, ctrlCfg *controller.SloopControllerConfig, kclient *kubernetes.Clientset, l *logrus.Logger) *SyncConfig {
+	return &SyncConfig{sloopPkg: cfg, controllerCfg: ctrlCfg, kubeClient: kclient, log: l}
 }
 
 //SyncPackage - Compiles sloop package to generate sloop-config and apply the same to the sloop namespace
-func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
+func (s *SyncConfig) SyncPackage() error {
 
 	var lastSyncRevision int
 
@@ -44,7 +45,7 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 		lastSyncRevision, err = getLastSyncRevision(syncHistory)
 
 		if err != nil {
-			l.Debugf("Unable to find any sync revison for the specified sloop package, creating the first revision. reason=%v", err)
+			s.log.Debugf("Unable to find any sync revison for the specified sloop package, creating the first revision. reason=%v", err)
 			lastSyncRevision = 0
 		}
 	}
@@ -72,11 +73,14 @@ func (s *SyncConfig) SyncPackage(l *logrus.Logger) error {
 	_, err = s.kubeClient.CoreV1().Secrets(s.sloopPkg.Metadata.Namespace).Create(ctx, SloopControllerSecret, metav1.CreateOptions{})
 
 	if err != nil {
-		l.Errorf("Error creating sloop config secret.")
+		s.log.Errorf("Error creating sloop config secret.")
 		return err
 	}
 
 	sloopDeploymentStatus, _ := yaml.Marshal(s.controllerCfg.Status)
+
+	// Aborting pending revisions which are still pending.
+	s.cleanOldRegisteredRevisions(fmt.Sprint(configStatus.SyncRevision))
 
 	// CONSOLE-INFO : SYNC OPERATION STATUS
 	fmt.Println(string(sloopDeploymentStatus))

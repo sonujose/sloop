@@ -41,7 +41,7 @@ var templateCmd = &cobra.Command{
 			return err
 		}
 
-		l.Debugf("\nSloop Controller config - %v", string(sloopcontrollerContent))
+		l.Tracef("Sloop Controller config - %v", string(sloopcontrollerContent))
 
 		return nil
 	},
