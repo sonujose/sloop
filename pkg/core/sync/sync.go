@@ -34,7 +34,7 @@ func (s *SyncConfig) SyncPackage() error {
 
 	var lastSyncRevision int
 
-	hs := history.New(s.kubeClient)
+	hs := history.New(s.kubeClient, s.log)
 
 	labelSel := history.GetPackageHistoryLabelSelectors(history.PackageHistoryFilterKey, s.sloopPkg.Metadata.Name)
 	syncHistory, err := hs.GetPackageSyncHistorybyLabels(labelSel, s.sloopPkg.Metadata.Namespace)

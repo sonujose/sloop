@@ -92,7 +92,7 @@ var syncHistoryCmd = &cobra.Command{
 			return err
 		}
 
-		hs := history.New(kclient)
+		hs := history.New(kclient, l)
 
 		syncHistory, err := hs.ListSyncHistory(sloopPkg.Metadata.Name, sloopPkg.Metadata.Namespace, allpackages)
 		if err != nil {

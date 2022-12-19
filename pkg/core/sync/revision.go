@@ -34,7 +34,7 @@ func getLastSyncRevision(syncHistory []v1.Secret) (int, error) {
 // cleanOldRegisteredRevisions - cleans up old revisions (making the status to aborted), which are not yet catched by the controller, so that
 // only the latest rev will be picked up by the controller.
 func (s *SyncConfig) cleanOldRegisteredRevisions(rev string) error {
-	hs := history.New(s.kubeClient)
+	hs := history.New(s.kubeClient, s.log)
 
 	var syncHistoryPending []v1.Secret
 

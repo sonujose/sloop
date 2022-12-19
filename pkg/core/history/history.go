@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/pkg/core/consts"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,11 +16,13 @@ import (
 
 type SloopHistory struct {
 	KubeClient *kubernetes.Clientset
+	log        *logrus.Logger
 }
 
-func New(kclient *kubernetes.Clientset) *SloopHistory {
+func New(kclient *kubernetes.Clientset, log *logrus.Logger) *SloopHistory {
 	return &SloopHistory{
 		KubeClient: kclient,
+		log:        log,
 	}
 }
 

@@ -12,7 +12,7 @@ import (
 func PrintSyncHistory(hs []history.SyncHistory) {
 
 	t := newTableInstance()
-	t.AppendHeader(table.Row{"PACKAGE", "REV", "STATUS", "COMPONENTS", "CREATED", "VERSION"})
+	t.AppendHeader(table.Row{"PACKAGE", "REV", "STATUS", "COMPONENTS", "UPDATED", "VERSION"})
 
 	for _, j := range hs {
 		updatedTime := j.Updated.Format(time.RFC1123)
