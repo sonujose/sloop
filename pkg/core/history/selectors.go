@@ -15,6 +15,9 @@ const (
 
 	//RegisteredPackagesHistoryFilterKey : List history of package revisions with registered status
 	RegisteredPackagesHistoryFilterKey string = "packgeRegisteredRevisions"
+
+	//PackageHistoryByRevisionFilterkey : Get the history data of a specific revision
+	PackageHistoryByRevisionFilterkey string = "packageHistoryForRevision"
 )
 
 // GetPackageHistoryLabelSelectors - Provides label selectors for getting package history for different purpose
@@ -22,7 +25,8 @@ const (
 // 		- PackageHistoryFilterKey
 // 		- AllPackagesHistoryFilterKey
 // 		- RegisteredPackagesHistoryFilterKey
-func GetPackageHistoryLabelSelectors(purpose string, packageName string) klabel.Selector {
+//      - PackageHistoryByRevisionFilterkey
+func (h *History) GetPackageHistoryLabelSelectors(purpose string, packageName string, revision string) klabel.Selector {
 
 	var labels map[string]string
 	switch purpose {
@@ -36,6 +40,8 @@ func GetPackageHistoryLabelSelectors(purpose string, packageName string) klabel.
 	case RegisteredPackagesHistoryFilterKey:
 		labels = map[string]string{"owner": consts.ToolName, "package": packageName, "status": consts.StatusRegistered}
 		break
+	case PackageHistoryByRevisionFilterkey:
+		labels = map[string]string{"owner": consts.ToolName, "package": packageName, "revision": revision}
 	default:
 		labels = map[string]string{"owner": consts.ToolName}
 		break

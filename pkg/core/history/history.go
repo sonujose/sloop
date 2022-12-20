@@ -14,13 +14,13 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-type SloopHistory struct {
+type History struct {
 	KubeClient *kubernetes.Clientset
 	log        *logrus.Logger
 }
 
-func New(kclient *kubernetes.Clientset, log *logrus.Logger) *SloopHistory {
-	return &SloopHistory{
+func New(kclient *kubernetes.Clientset, log *logrus.Logger) *History {
+	return &History{
 		KubeClient: kclient,
 		log:        log,
 	}
@@ -35,16 +35,16 @@ type SyncHistory struct {
 	Status     string
 }
 
-func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackages bool) ([]SyncHistory, error) {
+func (h *History) ListSyncHistory(name string, namespace string, allpackages bool) ([]SyncHistory, error) {
 
 	var syncHistory []SyncHistory
 
 	var labelSel klabel.Selector
 
 	if allpackages {
-		labelSel = GetPackageHistoryLabelSelectors(AllPackagesHistoryFilterKey, "")
+		labelSel = h.GetPackageHistoryLabelSelectors(AllPackagesHistoryFilterKey, "", "")
 	} else {
-		labelSel = GetPackageHistoryLabelSelectors(PackageHistoryFilterKey, name)
+		labelSel = h.GetPackageHistoryLabelSelectors(PackageHistoryFilterKey, name, "")
 	}
 
 	pkgHistoryList, err := h.GetPackageSyncHistorybyLabels(labelSel, namespace)
@@ -72,7 +72,7 @@ func (h *SloopHistory) ListSyncHistory(name string, namespace string, allpackage
 }
 
 // GetPackageSyncHistory - returnd the package history info in descending order of deployment
-func (h *SloopHistory) GetPackageSyncHistorybyLabels(labelSelector klabel.Selector, namespace string) ([]v1.Secret, error) {
+func (h *History) GetPackageSyncHistorybyLabels(labelSelector klabel.Selector, namespace string) ([]v1.Secret, error) {
 
 	ctx := context.Background()
 

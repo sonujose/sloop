@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -119,6 +120,27 @@ var syncCleanCmd = &cobra.Command{
 
 		l.SetLevel(logrus.Level(loglevel))
 
+		if revision == "" {
+			return errors.New("Please specify the sync revision.")
+		}
+
+		sloopPkg, err := config.ParseSloopPackage(l, packagefile)
+		if err != nil {
+			return err
+		}
+
+		kclient, err := kube.NewClient()
+
+		if err != nil {
+			l.Errorf("Error connecting to cluster. Aborting...")
+			return err
+		}
+
+		err = sloopSync.CleanPackageSyncRevision(kclient, l, revision, sloopPkg)
+
+		if err != nil {
+			return err
+		}
 		return nil
 	},
 	SilenceUsage: true,
