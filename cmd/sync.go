@@ -3,18 +3,17 @@ package cmd
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/controller"
 	"github.com/sonujose/sloop/pkg/config"
 	"github.com/sonujose/sloop/pkg/console"
-	"github.com/sonujose/sloop/pkg/core/history"
 	sloopSync "github.com/sonujose/sloop/pkg/core/sync"
 	"github.com/sonujose/sloop/pkg/core/template"
 	"github.com/sonujose/sloop/pkg/kube"
 	"github.com/sonujose/sloop/pkg/logger"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -29,6 +28,10 @@ var syncCmd = &cobra.Command{
 	Aliases: []string{"s"},
 	Short:   "Creates the desired state from the sloop package file and apply the sloop config to the cluster",
 	RunE: func(cmd *cobra.Command, args []string) error {
+
+		console.PrintDefaultMessage("Syncing package config with the target cluster for sloop controller.")
+		console.PrintNextProcessMessage("Parsing and syncing sloop package...")
+
 		l := logger.NewLogger()
 
 		l.SetLevel(logrus.Level(loglevel))
@@ -61,50 +64,20 @@ var syncCmd = &cobra.Command{
 
 		ss := sloopSync.New(sloopPkg, sloopCtrlConfig, kclient, l)
 
-		err = ss.SyncPackage()
+		syncStatus, err := ss.SyncPackage()
 
 		if err != nil {
 			return err
 		}
 
-		return nil
-	},
-	SilenceUsage: true,
-}
+		sloopDeploymentStatus, _ := yaml.Marshal(syncStatus)
 
-var syncHistoryCmd = &cobra.Command{
-	Use:     "history",
-	Aliases: []string{"h"},
-	Short:   "List the sync history if the specified sloop config.",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		l := logger.NewLogger()
-
-		l.SetLevel(logrus.Level(loglevel))
-
-		sloopPkg, err := config.ParseSloopPackage(l, packagefile)
-		if err != nil {
-			return err
-		}
-
-		kclient, err := kube.NewClient()
-
-		if err != nil {
-			l.Errorf("Error connecting to cluster via clientcmd. Aborting...")
-			return err
-		}
-
-		hs := history.New(kclient, l)
-
-		syncHistory, err := hs.ListSyncHistory(sloopPkg.Metadata.Name, sloopPkg.Metadata.Namespace, allpackages)
-		if err != nil {
-			return err
-		}
-
-		if len(syncHistory) > 0 {
-			console.PrintSyncHistory(syncHistory)
-		} else {
-			fmt.Println("No sync history found for the package -", sloopPkg.Metadata.Name)
-		}
+		// Printing command success messages to console
+		console.PrintStatusMessage(string(sloopDeploymentStatus))
+		console.PrintInfoMessage("Parsed all package templates")
+		console.PrintInfoMessage("Created sloop config for controller")
+		console.PrintInfoMessage("Aborted old unused sync revisions")
+		console.PrintSuccessMessage("Sync Success")
 
 		return nil
 	},
@@ -163,9 +136,7 @@ var syncDeleteCmd = &cobra.Command{
 func init() {
 	syncCmd.PersistentFlags().BoolVarP(&dryrun, "dryrun", "d", false, "Use dry run to test the sloop configurations.")
 	syncCmd.PersistentFlags().StringVarP(&namespace, "namespace", "n", "", "specify the namespace for syncing sloop config")
-	syncHistoryCmd.PersistentFlags().BoolVarP(&allpackages, "allpackages", "a", false, "get history from all the packages")
 	syncCleanCmd.PersistentFlags().StringVarP(&revision, "revision", "r", "", "specify the sync revision that needs to be cleaned")
-	syncCmd.AddCommand(syncHistoryCmd)
 	syncCmd.AddCommand(syncCleanCmd)
 	syncCmd.AddCommand(syncDeleteCmd)
 	rootCmd.AddCommand(syncCmd)

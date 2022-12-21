@@ -10,7 +10,6 @@ import (
 	"github.com/sonujose/sloop/apis/v1/client"
 	"github.com/sonujose/sloop/apis/v1/controller"
 	"github.com/sonujose/sloop/pkg/core/history"
-	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 )
@@ -30,7 +29,7 @@ func New(cfg *client.SloopPackage, ctrlCfg *controller.SloopControllerConfig, kc
 //
 // Executes on the command `sloop sync`
 //
-func (s *SyncConfig) SyncPackage() error {
+func (s *SyncConfig) SyncPackage() (controller.SloopConfigStatus, error) {
 
 	var lastSyncRevision int
 
@@ -74,17 +73,11 @@ func (s *SyncConfig) SyncPackage() error {
 
 	if err != nil {
 		s.log.Errorf("Error creating sloop config secret.")
-		return err
+		return configStatus, err
 	}
-
-	sloopDeploymentStatus, _ := yaml.Marshal(s.controllerCfg.Status)
 
 	// Aborting pending revisions which are still pending.
 	s.abortOldRegisteredRevisions(fmt.Sprint(configStatus.SyncRevision))
 
-	// CONSOLE-INFO : SYNC OPERATION STATUS
-	fmt.Println(string(sloopDeploymentStatus))
-	fmt.Println("Succeeded!! Registered sloop configuration for the package")
-
-	return nil
+	return configStatus, nil
 }

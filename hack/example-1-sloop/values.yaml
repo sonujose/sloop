@@ -8,11 +8,9 @@ image:
   pullPolicy: IfNotPresent
 
 labels:
-  app.kubernetes.io/version: 1.0
   app.kubernetes.io/name: example-1
 
 selectors:
-  app.kubernetes.io/version: 1.0
   app.kubernetes.io/name: example-1
 
 service:
