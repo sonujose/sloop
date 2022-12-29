@@ -15,21 +15,19 @@ spec:
       namespace: app-ns
       set:
         - name : .image.tag
-          value: 1.23.3
+          value: 3.23.3
         - name: .image.repository
           value: nginx
       valuesFiles:
         - ./hack/example-1-sloop/values.yaml 
-    - name: microservice
+        - ./hack/example-1-sloop/values.dev.yaml 
+    - name: app2
       enabled: true
       path: ./hack/example-1-sloop/app2
       namespace: app-ns2
       set:
-        - name: .image.tag
-          value: 1.23.3
-        - name: .image.repository
-          value: nginx
         - name: .name
           value: updated-example-f3
       valuesFiles:
         - ./hack/example-1-sloop/values.yaml 
+        - ./hack/example-1-sloop/values.dev.yaml 
