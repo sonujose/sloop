@@ -1,0 +1,7 @@
+image:
+  tag: 2.14.2
+
+name: example-32
+
+service:
+  type: LoadBalancer

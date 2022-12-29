@@ -9,6 +9,7 @@ import (
 	"io"
 	"text/template"
 
+	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/client"
 	"github.com/sonujose/sloop/apis/v1/controller"
@@ -49,12 +50,8 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 
 		log.Debug(templateFiles)
 
-		valuesFile, err := ioutil.ReadFile(j.ValuesFiles[0])
-
-		if err != nil {
-			log.WithError(err).Errorf("Error loading values file from sloop components")
-			return nil, err
-		}
+		mergedValuesFileyaml, err := mergeAllValuesFile(j.ValuesFiles, log)
+		updatedMergedYaml := mergeOverrideWithValuesFiles(j.Set, mergedValuesFileyaml)
 
 		componentConfig := &controller.Component{
 			Name:      j.Name,
@@ -73,39 +70,6 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 			}
 
 			blobString := string(data)
-
-			var valuesFileYaml map[string]interface{}
-			err = yaml.Unmarshal(valuesFile, &valuesFileYaml)
-			if err != nil {
-				log.WithError(err).Errorf("Error unmarshall default values file")
-				return nil, err
-			}
-
-			overrideValues := j.Set
-
-			var overridesYaml map[string]interface{}
-
-			for _, n := range overrideValues {
-				mapKey := n.Name
-				setKeys := strings.Split(mapKey, ".")
-				newmap := generateValuesForOverrides(setKeys, n.Value)
-				overridesYaml = mergeMaps(overridesYaml, newmap)
-			}
-
-			updatedMergedYaml := mergeMaps(valuesFileYaml, overridesYaml)
-
-			// DEBUG
-			//log.Debugf("Default values yaml - %v", valuesFileYaml)
-			//valuesFile, _ := yaml.Marshal(valuesFileYaml)
-			//log.Infof("Default values yaml\n%s", string(valuesFile))
-
-			//log.Debugf("Override yaml - %v", overridesYaml)
-			//overrideYamlFile, _ := yaml.Marshal(overridesYaml)
-			//log.Infof("Override Yaml\n%s", string(overrideYamlFile))
-
-			//log.Debugf("New updated yaml - %v", updatedMergedYaml)
-			//mergedYamlFile, _ := yaml.Marshal(updatedMergedYaml)
-			//log.Infof("Merged Yaml\n%s", string(mergedYamlFile))
 
 			templateManifest.Write([]byte("---\n"))
 			templateManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s, Namespace: %s\n", j.Name, templateFile, j.Namespace)))
@@ -132,6 +96,59 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 	sloopSyncConfiguration.Config.ConsolidatedManifest = componentManifest.String()
 
 	return sloopSyncConfiguration, nil
+}
+
+func mergeAllValuesFile(valuesFiles []string, log *logrus.Logger) (map[string]interface{}, error) {
+
+	defValuesFile, err := ioutil.ReadFile(valuesFiles[0])
+
+	var defvaluesFileYaml map[string]interface{}
+	err = yaml.Unmarshal(defValuesFile, &defvaluesFileYaml)
+	if err != nil {
+		log.WithError(err).Errorf("Error unmarshall default values file")
+		return nil, err
+	}
+
+	for _, j := range valuesFiles[1:] {
+
+		valuesFile, err := ioutil.ReadFile(j)
+
+		if err != nil {
+			log.WithError(err).Errorf("Error loading values file from sloop components")
+			return nil, err
+		}
+
+		var valuesFileYaml map[string]interface{}
+		err = yaml.Unmarshal(valuesFile, &valuesFileYaml)
+		if err != nil {
+			log.WithError(err).Errorf("Error unmarshall default values file")
+			return nil, err
+		}
+
+		err = mergo.Merge(&defvaluesFileYaml, valuesFileYaml, mergo.WithOverride)
+
+		if err != nil {
+			return nil, err
+		}
+
+	}
+
+	return defvaluesFileYaml, nil
+}
+
+func mergeOverrideWithValuesFiles(overrideValues []client.Set, mergedValuesFile map[string]interface{}) map[string]interface{} {
+
+	for _, n := range overrideValues {
+		mapKey := n.Name
+		setKeys := strings.Split(mapKey, ".")
+		newval := generateValuesForOverrides(setKeys, n.Value)
+		err := mergo.Merge(&mergedValuesFile, newval, mergo.WithOverride)
+		if err != nil {
+			continue
+		}
+	}
+
+	return mergedValuesFile
 }
 
 func templateExecutor(t string, vals map[string]interface{}, out io.Writer) error {
