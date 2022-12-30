@@ -2,11 +2,7 @@ package template
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
-
-	"io"
-	"text/template"
 
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/client"
@@ -30,13 +26,13 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 		Name: t.sloopPkg.Metadata.Name,
 	}
 
-	for _, j := range configuratorObj.Spec.Components {
+	for _, comp := range configuratorObj.Spec.Components {
 
-		if !j.Enabled {
+		if !comp.Enabled {
 			continue
 		}
 
-		templatePath := j.Path
+		templatePath := comp.Path
 		templateFiles, err := walkMatch(templatePath, "*")
 
 		if err != nil {
@@ -46,17 +42,17 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 
 		log.Debug(templateFiles)
 
-		mergedValuesFileyaml, err := mergeAllValuesFile(j.ValuesFiles, log)
+		mergedValuesFileyaml, err := coalesceAllValuesFiles(comp.ValuesFiles, log)
 		if err != nil {
 			return nil, err
 		}
 
-		updatedMergedYaml := mergeOverrideWithValuesFiles(j.Set, mergedValuesFileyaml)
+		updatedMergedYaml := coalesceValuesFilesWithOverrides(comp.Set, mergedValuesFileyaml)
 
 		componentConfig := &controller.Component{
-			Name:      j.Name,
-			Namespace: j.Namespace,
-			Path:      j.Path,
+			Name:      comp.Name,
+			Namespace: comp.Namespace,
+			Path:      comp.Path,
 		}
 
 		for _, templateFile := range templateFiles {
@@ -65,14 +61,14 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 
 			templateFileBlob, err := ioutil.ReadFile(templateFile)
 			if err != nil {
-				log.WithError(err).Errorf("Error loading template file - %s", templateFile)
+				log.Errorf("Error loading template file - %s", templateFile)
 				return nil, err
 			}
 
 			err = templateExecutor(templateFileBlob, updatedMergedYaml, &templateManifest)
 
 			if err != nil {
-				log.WithError(err).Errorf("Failed to generate templates for the manifests")
+				log.Errorf("Failed to generate templates for the manifests")
 				return nil, err
 			}
 
@@ -82,8 +78,7 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 			}
 
 			componentConfig.TemplateFiles = append(componentConfig.TemplateFiles, *templateMeta)
-
-			templateManifestWithMeta := appendTemplateManifestWithMeta(templateManifest, j, templateFile)
+			templateManifestWithMeta := appendTemplateManifestWithMeta(templateManifest, comp, templateFile)
 			componentManifest.Write([]byte(templateManifestWithMeta.String()))
 
 		}
@@ -94,24 +89,4 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 	sloopSyncConfiguration.Config.ConsolidatedManifest = componentManifest.String()
 
 	return sloopSyncConfiguration, nil
-}
-
-func appendTemplateManifestWithMeta(templateManifest bytes.Buffer, comp client.Component, templateFile string) bytes.Buffer {
-
-	var packageTemplateManifest bytes.Buffer
-
-	// Write the whole template manifest for all components
-	packageTemplateManifest.Write([]byte("---\n"))
-	packageTemplateManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s, Namespace: %s\n", comp.Name, templateFile, comp.Namespace)))
-	packageTemplateManifest.Write(templateManifest.Bytes())
-
-	return packageTemplateManifest
-}
-
-func templateExecutor(t []byte, vals map[string]interface{}, out io.Writer) error {
-	tt, err := template.New("_").Parse(string(t))
-	if err != nil {
-		return err
-	}
-	return tt.Execute(out, vals)
 }
