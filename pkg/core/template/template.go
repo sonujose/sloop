@@ -47,6 +47,10 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 		log.Debug(templateFiles)
 
 		mergedValuesFileyaml, err := mergeAllValuesFile(j.ValuesFiles, log)
+		if err != nil {
+			return nil, err
+		}
+
 		updatedMergedYaml := mergeOverrideWithValuesFiles(j.Set, mergedValuesFileyaml)
 
 		componentConfig := &controller.Component{

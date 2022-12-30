@@ -13,11 +13,15 @@ import (
 func mergeAllValuesFile(valuesFiles []string, log *logrus.Logger) (map[string]interface{}, error) {
 
 	defValuesFile, err := ioutil.ReadFile(valuesFiles[0])
+	if err != nil {
+		log.Errorf("Error loading file %s", valuesFiles[0])
+		return nil, err
+	}
 
 	var defvaluesFileYaml map[string]interface{}
 	err = yaml.Unmarshal(defValuesFile, &defvaluesFileYaml)
 	if err != nil {
-		log.WithError(err).Errorf("Error unmarshall default values file")
+		log.Errorf("Error unmarshall default values file")
 		return nil, err
 	}
 
@@ -26,14 +30,14 @@ func mergeAllValuesFile(valuesFiles []string, log *logrus.Logger) (map[string]in
 		valuesFile, err := ioutil.ReadFile(j)
 
 		if err != nil {
-			log.WithError(err).Errorf("Error loading values file from sloop components")
+			log.Errorf("Error loading values file from sloop components")
 			return nil, err
 		}
 
 		var valuesFileYaml map[string]interface{}
 		err = yaml.Unmarshal(valuesFile, &valuesFileYaml)
 		if err != nil {
-			log.WithError(err).Errorf("Error unmarshall default values file")
+			log.Errorf("Error unmarshall default values file")
 			return nil, err
 		}
 
