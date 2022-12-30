@@ -13,13 +13,13 @@ spec:
       enabled: true
       path: ./hack/example-1-sloop/app
       namespace: app-ns
-      set:
+      set:                                            # Overrides individual fields in the values file, hihest precedence
         - name : .image.tag
           value: 3.23.3
         - name: .image.repository
           value: nginx
       valuesFiles:
-        - ./hack/example-1-sloop/values.yaml 
+        - ./hack/example-1-sloop/values.yaml          # Default Values file, least precedence
         - ./hack/example-1-sloop/values.dev.yaml 
     - name: app2
       enabled: true
@@ -29,5 +29,5 @@ spec:
         - name: .name
           value: updated-example-f3
       valuesFiles:
-        - ./hack/example-1-sloop/values.yaml 
+        - ./hack/example-1-sloop/values.yaml          # Default Values file, least precedence
         - ./hack/example-1-sloop/values.dev.yaml 

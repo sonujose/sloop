@@ -4,16 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"strings"
 
 	"io"
 	"text/template"
 
-	"github.com/imdario/mergo"
 	"github.com/sirupsen/logrus"
 	"github.com/sonujose/sloop/apis/v1/client"
 	"github.com/sonujose/sloop/apis/v1/controller"
-	yaml "gopkg.in/yaml.v2"
 )
 
 type SloopTemplate struct {
@@ -40,7 +37,6 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 		}
 
 		templatePath := j.Path
-
 		templateFiles, err := walkMatch(templatePath, "*")
 
 		if err != nil {
@@ -63,18 +59,13 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 
 			var templateManifest bytes.Buffer
 
-			data, err := ioutil.ReadFile(templateFile)
+			templateFileBlob, err := ioutil.ReadFile(templateFile)
 			if err != nil {
 				log.WithError(err).Errorf("Error loading template file - %s", templateFile)
 				return nil, err
 			}
 
-			blobString := string(data)
-
-			templateManifest.Write([]byte("---\n"))
-			templateManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s, Namespace: %s\n", j.Name, templateFile, j.Namespace)))
-
-			err = templateExecutor(blobString, updatedMergedYaml, &templateManifest)
+			err = templateExecutor(templateFileBlob, updatedMergedYaml, &templateManifest)
 
 			if err != nil {
 				log.WithError(err).Errorf("Failed to generate templates for the manifests")
@@ -87,7 +78,10 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 			}
 
 			componentConfig.TemplateFiles = append(componentConfig.TemplateFiles, *templateMeta)
-			componentManifest.Write([]byte(templateManifest.String()))
+
+			templateManifestWithMeta := appendTemplateManifestWithMeta(templateManifest, j, templateFile)
+			componentManifest.Write([]byte(templateManifestWithMeta.String()))
+
 		}
 
 		sloopSyncConfiguration.Config.Components = append(sloopSyncConfiguration.Config.Components, *componentConfig)
@@ -98,61 +92,20 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 	return sloopSyncConfiguration, nil
 }
 
-func mergeAllValuesFile(valuesFiles []string, log *logrus.Logger) (map[string]interface{}, error) {
+func appendTemplateManifestWithMeta(templateManifest bytes.Buffer, comp client.Component, templateFile string) bytes.Buffer {
 
-	defValuesFile, err := ioutil.ReadFile(valuesFiles[0])
+	var packageTemplateManifest bytes.Buffer
 
-	var defvaluesFileYaml map[string]interface{}
-	err = yaml.Unmarshal(defValuesFile, &defvaluesFileYaml)
-	if err != nil {
-		log.WithError(err).Errorf("Error unmarshall default values file")
-		return nil, err
-	}
+	// Write the whole template manifest for all components
+	packageTemplateManifest.Write([]byte("---\n"))
+	packageTemplateManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s, Namespace: %s\n", comp.Name, templateFile, comp.Namespace)))
+	packageTemplateManifest.Write(templateManifest.Bytes())
 
-	for _, j := range valuesFiles[1:] {
-
-		valuesFile, err := ioutil.ReadFile(j)
-
-		if err != nil {
-			log.WithError(err).Errorf("Error loading values file from sloop components")
-			return nil, err
-		}
-
-		var valuesFileYaml map[string]interface{}
-		err = yaml.Unmarshal(valuesFile, &valuesFileYaml)
-		if err != nil {
-			log.WithError(err).Errorf("Error unmarshall default values file")
-			return nil, err
-		}
-
-		err = mergo.Merge(&defvaluesFileYaml, valuesFileYaml, mergo.WithOverride)
-
-		if err != nil {
-			return nil, err
-		}
-
-	}
-
-	return defvaluesFileYaml, nil
+	return packageTemplateManifest
 }
 
-func mergeOverrideWithValuesFiles(overrideValues []client.Set, mergedValuesFile map[string]interface{}) map[string]interface{} {
-
-	for _, n := range overrideValues {
-		mapKey := n.Name
-		setKeys := strings.Split(mapKey, ".")
-		newval := generateValuesForOverrides(setKeys, n.Value)
-		err := mergo.Merge(&mergedValuesFile, newval, mergo.WithOverride)
-		if err != nil {
-			continue
-		}
-	}
-
-	return mergedValuesFile
-}
-
-func templateExecutor(t string, vals map[string]interface{}, out io.Writer) error {
-	tt, err := template.New("_").Parse(t)
+func templateExecutor(t []byte, vals map[string]interface{}, out io.Writer) error {
+	tt, err := template.New("_").Parse(string(t))
 	if err != nil {
 		return err
 	}

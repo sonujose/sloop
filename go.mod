@@ -3,7 +3,9 @@ module github.com/sonujose/sloop
 go 1.18
 
 require (
+	github.com/imdario/mergo v0.3.6
 	github.com/jedib0t/go-pretty/v6 v6.4.3
+	github.com/julienroland/usg v0.0.0-20160918114137-cb52eabb3d84
 	github.com/sirupsen/logrus v1.9.0
 	github.com/spf13/cobra v1.6.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -24,11 +26,9 @@ require (
 	github.com/google/gnostic v0.5.7-v3refs // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/google/gofuzz v1.1.0 // indirect
-	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/julienroland/usg v0.0.0-20160918114137-cb52eabb3d84 // indirect
 	github.com/mailru/easyjson v0.7.6 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

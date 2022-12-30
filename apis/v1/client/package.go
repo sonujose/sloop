@@ -17,7 +17,7 @@ type Set struct {
 	Name  string `yaml:"name"`
 	Value string `yaml:"value"`
 }
-type Components struct {
+type Component struct {
 	Name        string   `yaml:"name"`
 	Enabled     bool     `yaml:"enabled"`
 	Path        string   `yaml:"path"`
@@ -26,8 +26,8 @@ type Components struct {
 	ValuesFiles []string `yaml:"valuesFiles"`
 }
 type Spec struct {
-	Template   string       `yaml:"template"`
-	Version    string       `yaml:"version"`
-	Global     Global       `yaml:"global"`
-	Components []Components `yaml:"components"`
+	Template   string      `yaml:"template"`
+	Version    string      `yaml:"version"`
+	Global     Global      `yaml:"global"`
+	Components []Component `yaml:"components"`
 }
