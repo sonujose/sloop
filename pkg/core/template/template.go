@@ -72,13 +72,20 @@ func (t *SloopTemplate) GeneratePackageTemplates(log *logrus.Logger) (*controlle
 				return nil, err
 			}
 
+			manifestData, err := t.injectKubeSpecToManifest(templateManifest, comp, log)
+
+			if err != nil {
+				return nil, err
+			}
+
 			templateMeta := &controller.TemplateFile{
 				FileName:     templateFile,
-				ManifestYaml: templateManifest.String(),
+				ManifestYaml: string(manifestData),
 			}
 
 			componentConfig.TemplateFiles = append(componentConfig.TemplateFiles, *templateMeta)
-			templateManifestWithMeta := appendTemplateManifestWithMeta(templateManifest, comp, templateFile)
+			templateManifestWithMeta := appendTemplateManifestWithRef(manifestData, comp, templateFile)
+
 			componentManifest.Write([]byte(templateManifestWithMeta.String()))
 
 		}

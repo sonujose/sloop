@@ -12,7 +12,9 @@ spec:
   template:
     metadata:
       labels:
-        app: nginx
+      {{- range $key, $value := .selectors }}
+        {{ $key }}: {{ $value }}
+      {{- end }}
     spec:
       containers:
       - name: nginx

@@ -12,6 +12,7 @@ labels:
 
 selectors:
   app.kubernetes.io/name: example-1
+  app.kubernetes.io/package: sloop-package-dev
 
 service:
   type: ClusterIP

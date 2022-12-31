@@ -35,15 +35,15 @@ func templateExecutor(t []byte, vals map[string]interface{}, out io.Writer) erro
 	return tt.Execute(out, vals)
 }
 
-// appendTemplateManifestWithMeta - Append the Metaline for the template files.
-func appendTemplateManifestWithMeta(templateManifest bytes.Buffer, comp client.Component, templateFile string) bytes.Buffer {
+// appendTemplateManifestWithRef - Append the Metaline for the template files.
+func appendTemplateManifestWithRef(templateManifest []byte, comp client.Component, templateFile string) bytes.Buffer {
 
 	var packageTemplateManifest bytes.Buffer
 
 	// Write the whole template manifest for all components
 	packageTemplateManifest.Write([]byte("---\n"))
 	packageTemplateManifest.Write([]byte(fmt.Sprintf("# Component: %s, Manifest: %s, Namespace: %s\n", comp.Name, templateFile, comp.Namespace)))
-	packageTemplateManifest.Write(templateManifest.Bytes())
+	packageTemplateManifest.Write(templateManifest)
 
 	return packageTemplateManifest
 }
